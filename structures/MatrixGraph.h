@@ -1,21 +1,20 @@
 #ifndef MATRIX_GRAPH_H
 #define MATRIX_GRAPH_H
 
-#include "Edge.h"
+#include "IGraph.h"
 
-// Reprezentacja grafu jako macierz
-class MatrixGraph {
+// Reprezentacja grafu jako macierz sasiedztwa
+class MatrixGraph : public IGraph {
 private:
-    int vertices;     // liczba wierzchołków
-    int** matrix;     // macierz sąsiedztwa
+    int vertices;
+    int** matrix;
 
 public:
-    MatrixGraph(int vertices);
+    explicit MatrixGraph(int vertices);
     ~MatrixGraph();
 
-    void addEdge(int start, int end, int weight);
-
-    void print() const;
+    void addEdge(int start, int end, int weight) override;
+    void print() const override;
 };
 
 #endif

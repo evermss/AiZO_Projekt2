@@ -1,21 +1,22 @@
 #ifndef LIST_GRAPH_H
 #define LIST_GRAPH_H
 
+#include "IGraph.h"
 #include "LinkedList.h"
 #include "Edge.h"
 
-// Reprezentacja grafu jako lista sąsiedztwa
-class ListGraph {
+// Reprezentacja grafu jako lista sasiedztwa
+class ListGraph : public IGraph {
 private:
-    int vertices;              // liczba wierzchołków
-    LinkedList<Edge>* adjList; // tablica list sąsiedztwa
+    int vertices;
+    LinkedList<Edge>* adjList;
 
 public:
     explicit ListGraph(int vertices);
     ~ListGraph();
 
-    void addEdge(int start, int end, int weight);
-    void print() const;
+    void addEdge(int start, int end, int weight) override;
+    void print() const override;
 };
 
 #endif

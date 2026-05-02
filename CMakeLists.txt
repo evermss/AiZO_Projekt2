@@ -18,4 +18,5 @@ add_executable(AiZO_Projekt2
         structures/MatrixGraph.cpp
         structures/ListGraph.cpp
         structures/FileLoader.cpp
+        structures/IGraph.h
 )
