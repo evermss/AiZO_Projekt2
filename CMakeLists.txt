@@ -17,4 +17,5 @@ add_executable(AiZO_Projekt2
         structures/Edge.cpp
         structures/MatrixGraph.cpp
         structures/ListGraph.cpp
+        structures/FileLoader.cpp
 )
