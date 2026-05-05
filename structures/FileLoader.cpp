@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 
-// Wczytywanie grafu do macierzy
+// Wczytuje graf z pliku do reprezentacji macierzowej
 void FileLoader::loadMatrixGraph(const std::string& filename, MatrixGraph& graph) {
     std::ifstream file(filename);
 
@@ -14,6 +14,7 @@ void FileLoader::loadMatrixGraph(const std::string& filename, MatrixGraph& graph
     int edges;
     int vertices;
 
+    // Odczyt liczby krawedzi i wierzcholkow
     if (!(file >> edges >> vertices)) {
         std::cout << "Blad: niepoprawna pierwsza linia pliku." << std::endl;
         return;
@@ -25,6 +26,7 @@ void FileLoader::loadMatrixGraph(const std::string& filename, MatrixGraph& graph
     int weight;
 
     while (file >> start >> end >> weight) {
+        // Sprawdzenie poprawnosci danych krawedzi
         if (start < 0 || start >= vertices || end < 0 || end >= vertices) {
             std::cout << "Blad: niepoprawny numer wierzcholka." << std::endl;
             continue;
@@ -39,6 +41,7 @@ void FileLoader::loadMatrixGraph(const std::string& filename, MatrixGraph& graph
         loadedEdges++;
     }
 
+    // Sprawdzenie zgodnosci liczby krawedzi
     if (loadedEdges != edges) {
         std::cout << "Blad: liczba wczytanych krawedzi nie zgadza sie z plikiem." << std::endl;
         std::cout << "Oczekiwano: " << edges << ", wczytano: " << loadedEdges << std::endl;
@@ -47,7 +50,7 @@ void FileLoader::loadMatrixGraph(const std::string& filename, MatrixGraph& graph
     file.close();
 }
 
-// Wczytywanie grafu do listy
+// Wczytuje graf z pliku do reprezentacji listowej
 void FileLoader::loadListGraph(const std::string& filename, ListGraph& graph) {
     std::ifstream file(filename);
 
@@ -59,6 +62,7 @@ void FileLoader::loadListGraph(const std::string& filename, ListGraph& graph) {
     int edges;
     int vertices;
 
+    // Odczyt liczby krawedzi i wierzcholkow
     if (!(file >> edges >> vertices)) {
         std::cout << "Blad: niepoprawna pierwsza linia pliku." << std::endl;
         return;
@@ -70,6 +74,7 @@ void FileLoader::loadListGraph(const std::string& filename, ListGraph& graph) {
     int weight;
 
     while (file >> start >> end >> weight) {
+        // Sprawdzenie poprawnosci danych krawedzi
         if (start < 0 || start >= vertices || end < 0 || end >= vertices) {
             std::cout << "Blad: niepoprawny numer wierzcholka." << std::endl;
             continue;
@@ -84,6 +89,7 @@ void FileLoader::loadListGraph(const std::string& filename, ListGraph& graph) {
         loadedEdges++;
     }
 
+    // Sprawdzenie zgodnosci liczby krawedzi
     if (loadedEdges != edges) {
         std::cout << "Blad: liczba wczytanych krawedzi nie zgadza sie z plikiem." << std::endl;
         std::cout << "Oczekiwano: " << edges << ", wczytano: " << loadedEdges << std::endl;

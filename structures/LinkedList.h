@@ -1,7 +1,7 @@
 #ifndef LINKED_LIST_H
 #define LINKED_LIST_H
 
-// Prosta lista jednokierunkowa
+// Wlasna lista jednokierunkowa bez uzycia std::list
 template <typename T>
 class LinkedList {
 private:
@@ -12,8 +12,8 @@ private:
         Node(const T& value) : data(value), next(nullptr) {}
     };
 
-    Node* head; // początek listy
-    int size;   // liczba elementów
+    Node* head;
+    int size;
 
 public:
     LinkedList();
@@ -35,6 +35,7 @@ LinkedList<T>::~LinkedList() {
     clear();
 }
 
+// Dodanie elementu na koniec listy
 template <typename T>
 void LinkedList<T>::add(const T& value) {
     Node* newNode = new Node(value);
@@ -43,15 +44,18 @@ void LinkedList<T>::add(const T& value) {
         head = newNode;
     } else {
         Node* current = head;
+
         while (current->next) {
             current = current->next;
         }
+
         current->next = newNode;
     }
 
     size++;
 }
 
+// Pobranie elementu przez przejscie po liscie
 template <typename T>
 T& LinkedList<T>::get(int index) {
     Node* current = head;
@@ -73,6 +77,7 @@ bool LinkedList<T>::isEmpty() const {
     return size == 0;
 }
 
+// Usuniecie wszystkich elementow i zwolnienie pamieci
 template <typename T>
 void LinkedList<T>::clear() {
     Node* current = head;
