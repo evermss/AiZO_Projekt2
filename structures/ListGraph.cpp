@@ -34,3 +34,10 @@ void ListGraph::print() const {
         std::cout << std::endl;
     }
 }
+int ListGraph::getVertices() const {
+    return vertices;
+}
+
+LinkedList<Edge>& ListGraph::getAdjList(int vertex) const {
+    return adjList[vertex];
+}

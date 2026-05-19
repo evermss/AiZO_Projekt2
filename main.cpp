@@ -3,6 +3,9 @@
 #include "MatrixGraph.h"
 #include "ListGraph.h"
 #include "FileLoader.h"
+#include <string>
+#include "Prim.h"
+#include "Kruskal.h"
 
 // Wyswietlenie podstawowej instrukcji programu
 void showHelp() {
@@ -26,31 +29,46 @@ void runSingleTest() {
 
     std::cout << "\nLista grafu:\n";
     listGraph.print();
+
+    std::cout << "\nPrim - macierz:\n";
+    Prim::runMatrix(matrixGraph);
+
+    std::cout << "\nPrim - lista:\n";
+    Prim::runList(listGraph);
+
+    std::cout << "\nKruskal - macierz:\n";
+    Kruskal::runMatrix(matrixGraph);
+
+    std::cout << "\nKruskal - lista:\n";
+    Kruskal::runList(listGraph);
+}
+
+// Tryb badan
+void runBenchmark() {
+    std::cout << "Tryb badan zostanie dodany w kolejnym etapie.\n";
 }
 
 int main(int argc, char* argv[]) {
-    // Bez argumentow uruchamiamy prosty test
     if (argc == 1) {
         showHelp();
         runSingleTest();
         return 0;
     }
 
-    // Odczyt parametrow z biblioteki prowadzacego
-    Parameters::readParameters(argc, argv);
+    std::string mode = argv[1];
 
-    if (Parameters::runMode == Parameters::RunModes::help) {
-        Parameters::help();
+    if (mode == "help" || mode == "--help") {
+        showHelp();
         return 0;
     }
 
-    if (Parameters::runMode == Parameters::RunModes::singleFile) {
+    if (mode == "singleFile" || mode == "--singleFile") {
         runSingleTest();
         return 0;
     }
 
-    if (Parameters::runMode == Parameters::RunModes::benchmark) {
-        std::cout << "Tryb badan zostanie dodany w kolejnym etapie.\n";
+    if (mode == "benchmark" || mode == "--benchmark") {
+        runBenchmark();
         return 0;
     }
 

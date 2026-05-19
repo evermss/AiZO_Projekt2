@@ -11,6 +11,10 @@ add_executable(AiZO_Projekt2
         structures/MatrixGraph.cpp
         structures/ListGraph.cpp
         structures/FileLoader.cpp
+        algorithms/Prim.cpp
+        algorithms/Kruskal.cpp
+        algorithms/Kruskal.h
+
 )
 
 target_include_directories(AiZO_Projekt2 PRIVATE

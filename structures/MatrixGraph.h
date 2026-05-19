@@ -15,6 +15,9 @@ public:
 
     void addEdge(int start, int end, int weight) override;
     void print() const override;
+
+    int getVertices() const;
+    int getEdge(int from, int to) const;
 };
 
 #endif

@@ -17,6 +17,9 @@ public:
 
     void addEdge(int start, int end, int weight) override;
     void print() const override;
+
+    int getVertices() const;
+    LinkedList<Edge>& getAdjList(int vertex) const;
 };
 
 #endif
