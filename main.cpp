@@ -1,4 +1,5 @@
 #include <iostream>
+#include "Parameters.h"
 #include "MatrixGraph.h"
 #include "ListGraph.h"
 #include "FileLoader.h"
@@ -14,16 +15,25 @@ void showHelp() {
     std::cout << " - wyswietlenie grafu w liscie\n";
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+
+    if (argc > 1) {
+        Parameters::readParameters(argc, argv);
+    }
+
+    // Tryb pomocy
+    if (Parameters::runMode == Parameters::RunModes::help) {
+        Parameters::help();
+        return 0;
+    }
+
     showHelp();
 
-    // Tworzenie grafow w dwoch reprezentacjach
     MatrixGraph matrixGraph(4);
     ListGraph listGraph(4);
 
-    // Wczytywanie grafu z pliku testowego
-    FileLoader::loadMatrixGraph("../data/graph.txt", matrixGraph);
-    FileLoader::loadListGraph("../data/graph.txt", listGraph);
+    FileLoader::loadMatrixGraph("graph.txt", matrixGraph);
+    FileLoader::loadListGraph("graph.txt", listGraph);
 
     std::cout << "\nMacierz grafu:\n";
     matrixGraph.print();
