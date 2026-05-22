@@ -13,7 +13,10 @@ add_executable(AiZO_Projekt2
         structures/FileLoader.cpp
         algorithms/Prim.cpp
         algorithms/Kruskal.cpp
-        algorithms/Kruskal.h
+        algorithms/Dijkstra.cpp
+        algorithms/BellmanFord.cpp
+       
+
 
 )
 

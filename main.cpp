@@ -6,6 +6,8 @@
 #include <string>
 #include "Prim.h"
 #include "Kruskal.h"
+#include "Dijkstra.h"
+#include "BellmanFord.h"
 
 // Wyswietlenie podstawowej instrukcji programu
 void showHelp() {
@@ -41,6 +43,18 @@ void runSingleTest() {
 
     std::cout << "\nKruskal - lista:\n";
     Kruskal::runList(listGraph);
+
+    std::cout << "\nDijkstra - macierz:\n";
+    Dijkstra::runMatrix(matrixGraph, 0);
+
+    std::cout << "\nDijkstra - lista:\n";
+    Dijkstra::runList(listGraph, 0);
+
+    std::cout << "\nBellman-Ford - macierz:\n";
+    BellmanFord::runMatrix(matrixGraph, 0);
+
+    std::cout << "\nBellman-Ford - lista:\n";
+    BellmanFord::runList(listGraph, 0);
 }
 
 // Tryb badan
