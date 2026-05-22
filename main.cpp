@@ -8,6 +8,7 @@
 #include "Kruskal.h"
 #include "Dijkstra.h"
 #include "BellmanFord.h"
+#include "FordFulkerson.h"
 
 // Wyswietlenie podstawowej instrukcji programu
 void showHelp() {
@@ -55,6 +56,12 @@ void runSingleTest() {
 
     std::cout << "\nBellman-Ford - lista:\n";
     BellmanFord::runList(listGraph, 0);
+
+    std::cout << "\nFord-Fulkerson - macierz:\n";
+    FordFulkerson::runMatrix(matrixGraph, 0, 3);
+
+    std::cout << "\nFord-Fulkerson - lista:\n";
+    FordFulkerson::runList(listGraph, 0, 3);
 }
 
 // Tryb badan

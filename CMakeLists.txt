@@ -15,7 +15,7 @@ add_executable(AiZO_Projekt2
         algorithms/Kruskal.cpp
         algorithms/Dijkstra.cpp
         algorithms/BellmanFord.cpp
-       
+        algorithms/FordFulkerson.cpp
 
 
 )
