@@ -1,13 +1,22 @@
-//
-// Created by adriana on 5/22/26.
-//
+#ifndef GRAPH_GENERATOR_H
+#define GRAPH_GENERATOR_H
 
-#ifndef AIZO_PROJEKT2_GRAPHGENERATOR_H
-#define AIZO_PROJEKT2_GRAPHGENERATOR_H
-
+#include "MatrixGraph.h"
+#include "ListGraph.h"
 
 class GraphGenerator {
+public:
+    static void generateMatrixGraph(
+        MatrixGraph& graph,
+        int vertices,
+        int density
+    );
+
+    static void generateListGraph(
+        ListGraph& graph,
+        int vertices,
+        int density
+    );
 };
 
-
-#endif //AIZO_PROJEKT2_GRAPHGENERATOR_H
+#endif

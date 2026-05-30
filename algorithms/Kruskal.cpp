@@ -4,7 +4,7 @@
 void Kruskal::runMatrix(MatrixGraph& graph) {
     int vertices = graph.getVertices();
 
-    int parent[100];
+    int* parent = new int[vertices];
 
     for (int i = 0; i < vertices; i++) {
         parent[i] = i;
@@ -60,12 +60,14 @@ void Kruskal::runMatrix(MatrixGraph& graph) {
     }
 
     std::cout << "Suma wag: " << totalWeight << "\n";
+
+    delete[] parent;
 }
 
 void Kruskal::runList(ListGraph& graph) {
     int vertices = graph.getVertices();
 
-    int parent[100];
+    int* parent = new int[vertices];
 
     for (int i = 0; i < vertices; i++) {
         parent[i] = i;
@@ -127,4 +129,6 @@ void Kruskal::runList(ListGraph& graph) {
     }
 
     std::cout << "Suma wag: " << totalWeight << "\n";
+
+    delete[] parent;
 }

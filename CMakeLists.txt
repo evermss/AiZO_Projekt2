@@ -16,6 +16,9 @@ add_executable(AiZO_Projekt2
         algorithms/Dijkstra.cpp
         algorithms/BellmanFord.cpp
         algorithms/FordFulkerson.cpp
+        research/Timer.cpp
+        research/GraphGenerator.cpp
+       
 
 
 )
