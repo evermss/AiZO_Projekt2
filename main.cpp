@@ -349,7 +349,7 @@ void runBenchmark() {
     file << "test,algorithm,structure,vertices,density,min_us,max_us,avg_us\n";
 
     int sizes[] = {20, 50, 100, 150, 200};
-    int densities[] = {25, 50, 75};
+    int densities[] = {25, 50, 75, 99};
 
     for (int i = 0; i < 5; i++) {
         int vertices = sizes[i];
@@ -361,7 +361,7 @@ void runBenchmark() {
         runBenchmarkForGraph(file, "A", vertices, 50);
     }
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         int density = densities[i];
 
         std::cout << "Badanie B: rozmiar 100, gestosc "
