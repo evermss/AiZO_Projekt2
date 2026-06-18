@@ -14,6 +14,7 @@
 #include "FordFulkerson.h"
 #include "Timer.h"
 #include "GraphGenerator.h"
+#include <chrono>
 
 void showHelp() {
     std::cout << "AiZO Projekt 2 - grafy\n";
@@ -21,6 +22,8 @@ void showHelp() {
     std::cout << " - help       -> pomoc\n";
     std::cout << " - singleFile -> pojedynczy test\n";
     std::cout << " - benchmark  -> badania\n";
+    std::cout << " - snap       -> porownanie z datasetem SNAP\n";
+    std::cout << " - snapAlgorithms -> czasy algorytmow na datasecie SNAP\n";
 }
 
 void runSingleTest() {
@@ -376,6 +379,116 @@ void runBenchmark() {
     std::cout << "Wyniki zapisano do results/benchmark.csv\n";
 }
 
+void runSnapComparison() {
+    const std::string filename = "datasets/CA-GrQc-converted.txt";
+
+    const int vertices = 5242;
+    const int edges = 28980;
+
+    ListGraph graph(vertices);
+
+    FileLoader::loadListGraph(filename, graph);
+
+    std::cout << "SNAP CA-GrQc comparison\n";
+    std::cout << "Vertices: " << vertices << "\n";
+    std::cout << "Edges: " << edges << "\n";
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    int cppMstWeight = Kruskal::getMstWeightList(graph);
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    long long timeUs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+    std::cout << "C++ Kruskal MST weight: " << cppMstWeight << "\n";
+    std::cout << "C++ Kruskal time [us]: " << timeUs << "\n";
+    std::cout << "NetworkX MST weight: 151373\n";
+
+    if (cppMstWeight == 151373) {
+        std::cout << "Result: OK - wyniki sa zgodne\n";
+    } else {
+        std::cout << "Result: UWAGA - wyniki sa rozne\n";
+    }
+}
+
+void runSnapAlgorithmsBenchmark() {
+    const std::string filename = "datasets/CA-GrQc_connected_directed_weighted.txt";
+    const int vertices = 4158;
+
+    ListGraph graph(vertices);
+
+    FileLoader::loadListGraph(filename, graph);
+
+    std::ofstream file("results/snap_algorithms.csv");
+
+    file << "algorithm,time_us\n";
+    file.flush();
+
+    Timer timer;
+    long long time;
+
+    std::cout << "Start Prim...\n";
+    {
+        std::streambuf* originalBuffer = std::cout.rdbuf();
+        std::ostringstream hiddenOutput;
+        std::cout.rdbuf(hiddenOutput.rdbuf());
+
+        timer.start();
+        Prim::runList(graph);
+        time = timer.stop();
+
+        std::cout.rdbuf(originalBuffer);
+    }
+    file << "Prim," << time << "\n";
+    file.flush();
+    std::cout << "Prim OK\n";
+
+    std::cout << "Start Kruskal...\n";
+    timer.start();
+    Kruskal::getMstWeightList(graph);
+    time = timer.stop();
+    file << "Kruskal," << time << "\n";
+    file.flush();
+    std::cout << "Kruskal OK\n";
+
+    std::cout << "Start Dijkstra...\n";
+    {
+        std::streambuf* originalBuffer = std::cout.rdbuf();
+        std::ostringstream hiddenOutput;
+        std::cout.rdbuf(hiddenOutput.rdbuf());
+
+        timer.start();
+        Dijkstra::runList(graph, 0);
+        time = timer.stop();
+
+        std::cout.rdbuf(originalBuffer);
+    }
+    file << "Dijkstra," << time << "\n";
+    file.flush();
+    std::cout << "Dijkstra OK\n";
+
+    std::cout << "Start Bellman-Ford...\n";
+    {
+        std::streambuf* originalBuffer = std::cout.rdbuf();
+        std::ostringstream hiddenOutput;
+        std::cout.rdbuf(hiddenOutput.rdbuf());
+
+        timer.start();
+        BellmanFord::runList(graph, 0);
+        time = timer.stop();
+
+        std::cout.rdbuf(originalBuffer);
+    }
+    file << "Bellman-Ford," << time << "\n";
+    file.flush();
+    std::cout << "Bellman-Ford OK\n";
+
+    file.close();
+
+    std::cout << "Wyniki zapisano do results/snap_algorithms.csv\n";
+}
+
 int main(int argc, char* argv[]) {
     if (argc == 1) {
         showHelp();
@@ -397,6 +510,16 @@ int main(int argc, char* argv[]) {
 
     if (mode == "benchmark" || mode == "--benchmark") {
         runBenchmark();
+        return 0;
+    }
+
+    if (mode == "snap" || mode == "--snap") {
+        runSnapComparison();
+        return 0;
+    }
+
+    if (mode == "snapAlgorithms" || mode == "--snapAlgorithms") {
+        runSnapAlgorithmsBenchmark();
         return 0;
     }
 

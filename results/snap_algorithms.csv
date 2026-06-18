@@ -1,0 +1,5 @@
+algorithm,time_us
+Prim,37416
+Kruskal,69231882
+Dijkstra,35840
+Bellman-Ford,2604965

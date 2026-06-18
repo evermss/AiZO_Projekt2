@@ -1,0 +1,4 @@
+NetworkX comparison
+Vertices: 5242
+Edges: 28980
+MST weight: 151373

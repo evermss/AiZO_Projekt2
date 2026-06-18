@@ -6,13 +6,14 @@ graph = nx.Graph()
 
 with open(input_file, "r") as file:
     first_line = file.readline().split()
-    edges_count = int(first_line[0])
-    vertices_count = int(first_line[1])
+
+    vertices = int(first_line[0])
+    edges_count = int(first_line[1])
 
     for line in file:
         parts = line.split()
 
-        if len(parts) != 3:
+        if len(parts) < 3:
             continue
 
         start = int(parts[0])
@@ -21,10 +22,17 @@ with open(input_file, "r") as file:
 
         graph.add_edge(start, end, weight=weight)
 
-mst = nx.minimum_spanning_tree(graph, algorithm="kruskal")
+mst = nx.minimum_spanning_tree(graph)
 mst_weight = mst.size(weight="weight")
 
-print("NetworkX comparison")
-print("Vertices:", vertices_count)
-print("Edges:", edges_count)
-print("MST weight:", int(mst_weight))
+result_text = (
+        "NetworkX comparison\n"
+        + "Vertices: " + str(vertices) + "\n"
+        + "Edges: " + str(edges_count) + "\n"
+        + "MST weight: " + str(int(mst_weight)) + "\n"
+)
+
+print(result_text)
+
+with open("results/networkx_comparison.txt", "w") as result_file:
+    result_file.write(result_text)

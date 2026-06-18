@@ -1,6 +1,6 @@
 import csv
-import matplotlib.pyplot as plt
 import os
+import matplotlib.pyplot as plt
 
 os.makedirs("results/charts", exist_ok=True)
 
@@ -8,35 +8,63 @@ data = []
 
 with open("results/benchmark.csv", "r") as file:
     reader = csv.DictReader(file)
-
     for row in reader:
         data.append(row)
 
 algorithms = ["Prim", "Kruskal", "Dijkstra", "BellmanFord", "FordFulkerson"]
 
 for algorithm in algorithms:
-    x = []
+    x_matrix = []
     y_matrix = []
+    x_list = []
     y_list = []
 
     for row in data:
         if row["test"] == "A" and row["algorithm"] == algorithm:
             if row["structure"] == "matrix":
-                x.append(int(row["vertices"]))
+                x_matrix.append(int(row["vertices"]))
                 y_matrix.append(int(row["avg_us"]))
-
-            if row["structure"] == "list":
+            elif row["structure"] == "list":
+                x_list.append(int(row["vertices"]))
                 y_list.append(int(row["avg_us"]))
 
-    plt.figure()
-    plt.plot(x, y_matrix, marker="o", label="matrix")
-    plt.plot(x, y_list, marker="o", label="list")
-    plt.xlabel("Vertices")
-    plt.ylabel("Average time [us]")
-    plt.title(algorithm + " - test A")
-    plt.legend()
+    plt.figure(figsize=(9, 6))
+    plt.plot(x_matrix, y_matrix, marker="o", label="Macierz", color="blue", linewidth=2)
+    plt.plot(x_list, y_list, marker="o", label="Lista", color="pink", linewidth=2)
+    plt.xlabel("Liczba wierzcholkow", fontsize=12)
+    plt.ylabel("Sredni czas [us]", fontsize=12)
+    plt.title(algorithm + " - badanie A", fontsize=14)
+    plt.legend(fontsize=11)
     plt.grid(True)
-    plt.savefig("results/charts/" + algorithm + "_test_A.png")
+    plt.tight_layout()
+    plt.savefig("results/charts/" + algorithm + "_badanie_A.png", dpi=200)
+    plt.close()
+
+for algorithm in algorithms:
+    x_matrix = []
+    y_matrix = []
+    x_list = []
+    y_list = []
+
+    for row in data:
+        if row["test"] == "B" and row["algorithm"] == algorithm:
+            if row["structure"] == "matrix":
+                x_matrix.append(int(row["density"]))
+                y_matrix.append(int(row["avg_us"]))
+            elif row["structure"] == "list":
+                x_list.append(int(row["density"]))
+                y_list.append(int(row["avg_us"]))
+
+    plt.figure(figsize=(9, 6))
+    plt.plot(x_matrix, y_matrix, marker="o", label="Macierz", color="blue", linewidth=2)
+    plt.plot(x_list, y_list, marker="o", label="Lista", color="pink", linewidth=2)
+    plt.xlabel("Gestosc grafu [%]", fontsize=12)
+    plt.ylabel("Sredni czas [us]", fontsize=12)
+    plt.title(algorithm + " - badanie B", fontsize=14)
+    plt.legend(fontsize=11)
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig("results/charts/" + algorithm + "_badanie_B.png", dpi=200)
     plt.close()
 
 print("Charts saved in results/charts")

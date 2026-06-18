@@ -11,11 +11,11 @@ void FileLoader::loadMatrixGraph(const std::string& filename, MatrixGraph& graph
         return;
     }
 
-    int edges;
     int vertices;
+    int edges;
 
     // Odczyt liczby krawedzi i wierzcholkow
-    if (!(file >> edges >> vertices)) {
+    if (!(file >> vertices >> edges)) {
         std::cout << "Blad: niepoprawna pierwsza linia pliku." << std::endl;
         return;
     }
@@ -59,11 +59,11 @@ void FileLoader::loadListGraph(const std::string& filename, ListGraph& graph) {
         return;
     }
 
-    int edges;
     int vertices;
+    int edges;
 
-    // Odczyt liczby krawedzi i wierzcholkow
-    if (!(file >> edges >> vertices)) {
+    // Odczyt liczby wierzcholkow i krawedzi
+    if (!(file >> vertices >> edges)) {
         std::cout << "Blad: niepoprawna pierwsza linia pliku." << std::endl;
         return;
     }

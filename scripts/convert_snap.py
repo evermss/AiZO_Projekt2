@@ -1,39 +1,44 @@
 input_file = "datasets/CA-GrQc.txt"
 output_file = "datasets/CA-GrQc-converted.txt"
 
-node_map = {}
 edges = []
-
-def get_new_id(old_id):
-    if old_id not in node_map:
-        node_map[old_id] = len(node_map)
-    return node_map[old_id]
+nodes = set()
 
 with open(input_file, "r") as file:
     for line in file:
-        line = line.strip()
-
-        if line == "" or line.startswith("#"):
+        if line.startswith("#"):
             continue
 
         parts = line.split()
 
-        old_start = int(parts[0])
-        old_end = int(parts[1])
+        if len(parts) < 2:
+            continue
 
-        start = get_new_id(old_start)
-        end = get_new_id(old_end)
+        start = int(parts[0])
+        end = int(parts[1])
 
-        weight = (len(edges) % 100) + 1
+        nodes.add(start)
+        nodes.add(end)
 
-        edges.append((start, end, weight))
+        edges.append((start, end))
+
+node_list = sorted(nodes)
+node_id = {}
+
+for i, node in enumerate(node_list):
+    node_id[node] = i
 
 with open(output_file, "w") as file:
-    file.write(str(len(edges)) + " " + str(len(node_map)) + "\n")
+    file.write(str(len(node_list)) + " " + str(len(edges)) + "\n")
 
-    for start, end, weight in edges:
-        file.write(str(start) + " " + str(end) + " " + str(weight) + "\n")
+    for start, end in edges:
+        new_start = node_id[start]
+        new_end = node_id[end]
 
-print("Zapisano:", output_file)
-print("Wierzcholki:", len(node_map))
-print("Krawedzie:", len(edges))
+        weight = (new_start + new_end) % 100 + 1
+
+        file.write(str(new_start) + " " + str(new_end) + " " + str(weight) + "\n")
+
+print("Converted SNAP dataset saved to", output_file)
+print("Vertices:", len(node_list))
+print("Edges:", len(edges))
