@@ -510,7 +510,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Obsługa standardowych parametrów przez bibliotekę prowadzącego
-    int parametersResult = Parameters::readParameters(argc, argv);
+    int parametersResult = Parameters::readParameters(argc - 1, argv + 1);
 
     if (parametersResult != 0) {
         std::cout << "Blad odczytu parametrow.\n";
