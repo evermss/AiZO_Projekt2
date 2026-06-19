@@ -62,11 +62,22 @@ for algorithm in algorithms:
     plt.plot(x_list, y_list, marker="o", label="Lista", color="pink", linewidth=2)
     plt.xlabel("Gestosc grafu [%]", fontsize=12)
     plt.ylabel("Sredni czas [us] - skala logarytmiczna", fontsize=12)
-    plt.yscale("log")
-    plt.ylim(bottom=10)
 
-    plt.xticks([20, 30, 40, 50, 60, 70, 80, 90, 100])
-    plt.xlim(15, 100)
+    plt.yscale("log")
+
+    ax = plt.gca()
+    y_values = []
+    
+    for line in ax.get_lines():
+        y_values.extend(line.get_ydata())
+
+    min_y = min(y_values)
+    max_y = max(y_values)
+
+    plt.ylim(bottom=max(10, min_y / 2), top=max_y * 2)
+
+    plt.xticks([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+    plt.xlim(10, 100)
 
     plt.title(algorithm + " - badanie B", fontsize=14)
     plt.legend(fontsize=11)
