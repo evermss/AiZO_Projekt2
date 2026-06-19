@@ -110,7 +110,7 @@ void runBenchmarkForGraph(
     GraphGenerator::generateMatrixGraph(matrixGraph, vertices, density);
     GraphGenerator::generateListGraph(listGraph, vertices, density);
 
-    const int TESTS = 3;
+    const int TESTS = 50;
 
     Timer timer;
 
