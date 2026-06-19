@@ -498,21 +498,7 @@ int main(int argc, char* argv[]) {
 
     std::string mode = argv[1];
 
-    if (mode == "help" || mode == "--help") {
-        showHelp();
-        return 0;
-    }
-
-    if (mode == "singleFile" || mode == "--singleFile") {
-        runSingleTest();
-        return 0;
-    }
-
-    if (mode == "benchmark" || mode == "--benchmark") {
-        runBenchmark();
-        return 0;
-    }
-
+    // Dodatkowe tryby projektu, których nie ma w bibliotece parametrów
     if (mode == "snap" || mode == "--snap") {
         runSnapComparison();
         return 0;
@@ -520,6 +506,31 @@ int main(int argc, char* argv[]) {
 
     if (mode == "snapAlgorithms" || mode == "--snapAlgorithms") {
         runSnapAlgorithmsBenchmark();
+        return 0;
+    }
+
+    // Obsługa standardowych parametrów przez bibliotekę prowadzącego
+    int parametersResult = Parameters::readParameters(argc, argv);
+
+    if (parametersResult != 0) {
+        std::cout << "Blad odczytu parametrow.\n";
+        showHelp();
+        return parametersResult;
+    }
+
+    if (Parameters::runMode == Parameters::RunModes::help) {
+        Parameters::help();
+        showHelp();
+        return 0;
+    }
+
+    if (Parameters::runMode == Parameters::RunModes::singleFile) {
+        runSingleTest();
+        return 0;
+    }
+
+    if (Parameters::runMode == Parameters::RunModes::benchmark) {
+        runBenchmark();
         return 0;
     }
 
