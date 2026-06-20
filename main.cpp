@@ -27,11 +27,26 @@ void showHelp() {
 }
 
 void runSingleTest() {
-    MatrixGraph matrixGraph(4);
-    ListGraph listGraph(4);
+    std::string inputFile = Parameters::inputFile.empty()
+        ? "data/graph.txt"
+        : Parameters::inputFile;
 
-    FileLoader::loadMatrixGraph("data/graph.txt", matrixGraph);
-    FileLoader::loadListGraph("data/graph.txt", listGraph);
+    std::ifstream file(inputFile);
+    if (!file.is_open()) {
+        std::cout << "Blad: nie mozna otworzyc pliku." << std::endl;
+        return;
+    }
+
+    int vertices = 0;
+    int edges = 0;
+    file >> vertices >> edges;
+    file.close();
+
+    MatrixGraph matrixGraph(vertices);
+    ListGraph listGraph(vertices);
+
+    FileLoader::loadMatrixGraph(inputFile, matrixGraph);
+    FileLoader::loadListGraph(inputFile, listGraph);
 
     std::cout << "\nMacierz grafu:\n";
     matrixGraph.print();
