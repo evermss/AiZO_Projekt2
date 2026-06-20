@@ -40,7 +40,26 @@ void runSingleTest() {
     int vertices = 0;
     int edges = 0;
     file >> vertices >> edges;
+
+    int maxVertexId = -1;
+    int from = 0;
+    int to = 0;
+    int weight = 0;
+
+    while (file >> from >> to >> weight) {
+        if (from > maxVertexId) {
+            maxVertexId = from;
+        }
+        if (to > maxVertexId) {
+            maxVertexId = to;
+        }
+    }
+
     file.close();
+
+    if (maxVertexId + 1 > vertices) {
+        vertices = maxVertexId + 1;
+    }
 
     MatrixGraph matrixGraph(vertices);
     ListGraph listGraph(vertices);
@@ -48,11 +67,16 @@ void runSingleTest() {
     FileLoader::loadMatrixGraph(inputFile, matrixGraph);
     FileLoader::loadListGraph(inputFile, listGraph);
 
-    std::cout << "\nMacierz grafu:\n";
-    matrixGraph.print();
+    if (Parameters::inputFile.empty()) {
+        std::cout << "\nMacierz grafu:\n";
+        matrixGraph.print();
 
-    std::cout << "\nLista grafu:\n";
-    listGraph.print();
+        std::cout << "\nLista grafu:\n";
+        listGraph.print();
+    } else {
+        std::cout << "Graf wczytany z pliku: " << inputFile << "\n";
+        std::cout << "Liczba wierzcholkow: " << vertices << "\n";
+    }
 
     Timer timer;
 
@@ -61,10 +85,56 @@ void runSingleTest() {
     Prim::runMatrix(matrixGraph);
     std::cout << "Czas: " << timer.stop() << " us\n";
 
-    std::cout << "\nPrim - lista:\n";
-    timer.start();
-    Prim::runList(listGraph);
-    std::cout << "Czas: " << timer.stop() << " us\n";
+    if (Parameters::inputFile.empty()) {
+        std::cout << "\nMacierz grafu:\n";
+        matrixGraph.print();
+
+        std::cout << "\nLista grafu:\n";
+        listGraph.print();
+    } else {
+        std::cout << "Graf wczytany z pliku: " << inputFile << "\n";
+        std::cout << "Liczba wierzcholkow: " << vertices << "\n";
+    }
+    if (!Parameters::inputFile.empty()) {
+        int algorithm = static_cast<int>(Parameters::algorithm);
+        int structure = static_cast<int>(Parameters::structure);
+        int startVertex = Parameters::vertexStart;
+        int endVertex = Parameters::vertexEnd;
+
+        if (algorithm == 1) { // Prim
+            if (structure == 1) {
+                Prim::runMatrix(matrixGraph);
+            } else if (structure == 2) {
+                Prim::runList(listGraph);
+            }
+        } else if (algorithm == 2) { // Kruskal
+            if (structure == 1) {
+                Kruskal::runMatrix(matrixGraph);
+            } else if (structure == 2) {
+                Kruskal::runList(listGraph);
+            }
+        } else if (algorithm == 3) { // Dijkstra
+            if (structure == 1) {
+                Dijkstra::runMatrix(matrixGraph, startVertex);
+            } else if (structure == 2) {
+                Dijkstra::runList(listGraph, startVertex);
+            }
+        } else if (algorithm == 4) { // Bellman-Ford
+            if (structure == 1) {
+                BellmanFord::runMatrix(matrixGraph, startVertex);
+            } else if (structure == 2) {
+                BellmanFord::runList(listGraph, startVertex);
+            }
+        } else if (algorithm == 5) { // Ford-Fulkerson
+            if (structure == 1) {
+                FordFulkerson::runMatrix(matrixGraph, startVertex, endVertex);
+            } else if (structure == 2) {
+                FordFulkerson::runList(listGraph, startVertex, endVertex);
+            }
+        }
+
+        return;
+    }
 
     std::cout << "\nKruskal - macierz:\n";
     Kruskal::runMatrix(matrixGraph);
