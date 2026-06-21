@@ -25,6 +25,13 @@ private:
 public:
     explicit MatrixGraph(int vertices);
     MatrixGraph(int vertices, int edgeCapacity);
+
+    MatrixGraph(const MatrixGraph& other) = delete;
+    MatrixGraph& operator=(const MatrixGraph& other) = delete;
+
+    MatrixGraph(MatrixGraph&& other) noexcept;
+    MatrixGraph& operator=(MatrixGraph&& other) noexcept;
+
     ~MatrixGraph();
 
     void reserveEdges(int capacity);

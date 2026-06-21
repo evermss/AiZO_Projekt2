@@ -125,6 +125,61 @@ MatrixGraph::~MatrixGraph() {
     delete[] edgeWeights;
 }
 
+MatrixGraph::MatrixGraph(MatrixGraph&& other) noexcept
+    : vertices(other.vertices),
+      edgeCount(other.edgeCount),
+      edgeCapacity(other.edgeCapacity),
+      incidenceMatrix(other.incidenceMatrix),
+      adjacencyMatrix(other.adjacencyMatrix),
+      edgeStarts(other.edgeStarts),
+      edgeEnds(other.edgeEnds),
+      edgeWeights(other.edgeWeights) {
+
+    other.vertices = 0;
+    other.edgeCount = 0;
+    other.edgeCapacity = 0;
+    other.incidenceMatrix = nullptr;
+    other.adjacencyMatrix = nullptr;
+    other.edgeStarts = nullptr;
+    other.edgeEnds = nullptr;
+    other.edgeWeights = nullptr;
+}
+
+MatrixGraph& MatrixGraph::operator=(MatrixGraph&& other) noexcept {
+    if (this != &other) {
+        for (int i = 0; i < vertices; i++) {
+            delete[] incidenceMatrix[i];
+            delete[] adjacencyMatrix[i];
+        }
+
+        delete[] incidenceMatrix;
+        delete[] adjacencyMatrix;
+        delete[] edgeStarts;
+        delete[] edgeEnds;
+        delete[] edgeWeights;
+
+        vertices = other.vertices;
+        edgeCount = other.edgeCount;
+        edgeCapacity = other.edgeCapacity;
+        incidenceMatrix = other.incidenceMatrix;
+        adjacencyMatrix = other.adjacencyMatrix;
+        edgeStarts = other.edgeStarts;
+        edgeEnds = other.edgeEnds;
+        edgeWeights = other.edgeWeights;
+
+        other.vertices = 0;
+        other.edgeCount = 0;
+        other.edgeCapacity = 0;
+        other.incidenceMatrix = nullptr;
+        other.adjacencyMatrix = nullptr;
+        other.edgeStarts = nullptr;
+        other.edgeEnds = nullptr;
+        other.edgeWeights = nullptr;
+    }
+
+    return *this;
+}
+
 void MatrixGraph::reserveEdges(int capacity) {
     if (capacity > edgeCapacity) {
         resizeIncidenceMatrix(capacity);
