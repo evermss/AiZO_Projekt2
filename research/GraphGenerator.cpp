@@ -21,6 +21,7 @@ void GraphGenerator::generateMatrixGraph(
     int edgesToGenerate = (maxEdges * density) / 100;
 
     srand(time(nullptr));
+    graph.reserveEdges(edgesToGenerate);
 
     int generatedEdges = 0;
 

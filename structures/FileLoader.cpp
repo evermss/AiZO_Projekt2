@@ -20,6 +20,8 @@ void FileLoader::loadMatrixGraph(const std::string& filename, MatrixGraph& graph
         return;
     }
 
+    graph.reserveEdges(edges);
+
     int loadedEdges = 0;
     int start;
     int end;

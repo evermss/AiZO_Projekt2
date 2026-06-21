@@ -3,20 +3,36 @@
 
 #include "IGraph.h"
 
-// Reprezentacja grafu jako macierz sasiedztwa
+// Reprezentacja grafu jako macierz incydencji.
+// Dodatkowa macierz sasiedztwa jest uzywana pomocniczo,
+// zeby algorytmy mogly szybko pobierac wage krawedzi getEdge(u, v).
 class MatrixGraph : public IGraph {
 private:
     int vertices;
-    int** matrix;
+    int edgeCount;
+    int edgeCapacity;
+
+    int** incidenceMatrix;
+    int** adjacencyMatrix;
+
+    int* edgeStarts;
+    int* edgeEnds;
+    int* edgeWeights;
+
+    void allocateIncidenceMatrix(int capacity);
+    void resizeIncidenceMatrix(int newCapacity);
 
 public:
     explicit MatrixGraph(int vertices);
+    MatrixGraph(int vertices, int edgeCapacity);
     ~MatrixGraph();
 
+    void reserveEdges(int capacity);
     void addEdge(int start, int end, int weight) override;
     void print() const override;
 
     int getVertices() const;
+    int getEdgesCount() const;
     int getEdge(int from, int to) const;
 };
 
