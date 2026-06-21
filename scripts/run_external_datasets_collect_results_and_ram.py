@@ -77,22 +77,22 @@ ALGORITHMS = {
 
 # enum class Structures { allStructures = 0, incidenceMatrix = 1, adjacencyList = 2 }
 STRUCTURES = {
-    "ADJACENCY_MATRIX": 1,
+    "INCIDENCE_MATRIX": 1,
     "ADJACENCY_LIST": 2,
 }
 
 TEST_PLAN = [
     # Directed weighted datasets.
-    ("directed", "SP", "DIJKSTRA", "ADJACENCY_MATRIX"),
-    ("directed", "SP", "BELLMAN_FORD", "ADJACENCY_MATRIX"),
-    ("directed", "MF", "FORD_FULKERSON", "ADJACENCY_MATRIX"),
+    ("directed", "SP", "DIJKSTRA", "INCIDENCE_MATRIX"),
+    ("directed", "SP", "BELLMAN_FORD", "INCIDENCE_MATRIX"),
+    ("directed", "MF", "FORD_FULKERSON", "INCIDENCE_MATRIX"),
     ("directed", "SP", "DIJKSTRA", "ADJACENCY_LIST"),
     ("directed", "SP", "BELLMAN_FORD", "ADJACENCY_LIST"),
     ("directed", "MF", "FORD_FULKERSON", "ADJACENCY_LIST"),
 
     # MST datasets.
-    ("directed", "MST", "PRIM", "ADJACENCY_MATRIX"),
-    ("directed", "MST", "KRUSKAL", "ADJACENCY_MATRIX"),
+    ("directed", "MST", "PRIM", "INCIDENCE_MATRIX"),
+    ("directed", "MST", "KRUSKAL", "INCIDENCE_MATRIX"),
     ("directed", "MST", "PRIM", "ADJACENCY_LIST"),
     ("directed", "MST", "KRUSKAL", "ADJACENCY_LIST"),
 ]

@@ -1,5 +1,5 @@
 algorithm,time_us
-Prim,50580
-Kruskal,63276175
-Dijkstra,27816
-Bellman-Ford,2399173
+Prim,49979
+Kruskal,60788756
+Dijkstra,27922
+Bellman-Ford,2209041
