@@ -33,7 +33,7 @@ void runSingleTest() {
 
     std::ifstream file(inputFile);
     if (!file.is_open()) {
-        std::cout << "Blad: nie mozna otworzyc pliku." << std::endl;
+        std::cout << "Blad: nie mozna otworzyc pliku wejściowego: " << inputFile << std::endl;
         return;
     }
 
@@ -67,98 +67,176 @@ void runSingleTest() {
     FileLoader::loadMatrixGraph(inputFile, matrixGraph);
     FileLoader::loadListGraph(inputFile, listGraph);
 
-    if (Parameters::inputFile.empty()) {
-        std::cout << "\nMacierz grafu:\n";
-        matrixGraph.print();
+    std::ofstream outputFile;
+    bool saveToFile = !Parameters::outputFile.empty();
 
-        std::cout << "\nLista grafu:\n";
-        listGraph.print();
-    } else {
-        std::cout << "Graf wczytany z pliku: " << inputFile << "\n";
-        std::cout << "Liczba wierzcholkow: " << vertices << "\n";
+    if (saveToFile) {
+        outputFile.open(Parameters::outputFile);
+
+        if (!outputFile.is_open()) {
+            std::cout << "Blad: nie mozna otworzyc pliku wyjsciowego: "
+                      << Parameters::outputFile << std::endl;
+            return;
+        }
     }
 
-    Timer timer;
+    auto writeLine = [&](const std::string& text) {
+        std::cout << text << "\n";
 
-    std::cout << "\nPrim - macierz:\n";
-    timer.start();
-    Prim::runMatrix(matrixGraph);
-    std::cout << "Czas: " << timer.stop() << " us\n";
+        if (saveToFile) {
+            outputFile << text << "\n";
+        }
+    };
+
+    auto runAndSaveOutput = [&](const std::string& title, auto algorithmCall) {
+        writeLine("");
+        writeLine("========================================");
+        writeLine(title);
+        writeLine("========================================");
+
+        std::streambuf* originalBuffer = std::cout.rdbuf();
+        std::ostringstream capturedOutput;
+        std::cout.rdbuf(capturedOutput.rdbuf());
+
+        algorithmCall();
+
+        std::cout.rdbuf(originalBuffer);
+
+        std::string result = capturedOutput.str();
+
+        std::cout << result;
+
+        if (saveToFile) {
+            outputFile << result;
+        }
+    };
+
+    writeLine("Tryb pojedynczego testu");
+    writeLine("Plik wejsciowy: " + inputFile);
+    writeLine("Liczba wierzcholkow: " + std::to_string(vertices));
+    writeLine("Liczba krawedzi z pliku: " + std::to_string(edges));
 
     if (Parameters::inputFile.empty()) {
-        std::cout << "\nMacierz grafu:\n";
-        matrixGraph.print();
+        runAndSaveOutput("Reprezentacja: macierz incydencji", [&]() {
+            matrixGraph.print();
+        });
 
-        std::cout << "\nLista grafu:\n";
-        listGraph.print();
-    } else {
-        std::cout << "Graf wczytany z pliku: " << inputFile << "\n";
-        std::cout << "Liczba wierzcholkow: " << vertices << "\n";
+        runAndSaveOutput("Reprezentacja: lista sasiedztwa", [&]() {
+            listGraph.print();
+        });
     }
-    if (!Parameters::inputFile.empty()) {
-        int algorithm = static_cast<int>(Parameters::algorithm);
-        int structure = static_cast<int>(Parameters::structure);
-        int startVertex = Parameters::vertexStart;
-        int endVertex = Parameters::vertexEnd;
 
-        if (algorithm == 1) { // Prim
-            if (structure == 1) {
-                Prim::runMatrix(matrixGraph);
-            } else if (structure == 2) {
-                Prim::runList(listGraph);
-            }
-        } else if (algorithm == 2) { // Kruskal
-            if (structure == 1) {
-                Kruskal::runMatrix(matrixGraph);
-            } else if (structure == 2) {
-                Kruskal::runList(listGraph);
-            }
-        } else if (algorithm == 3) { // Dijkstra
-            if (structure == 1) {
-                Dijkstra::runMatrix(matrixGraph, startVertex);
-            } else if (structure == 2) {
-                Dijkstra::runList(listGraph, startVertex);
-            }
-        } else if (algorithm == 4) { // Bellman-Ford
-            if (structure == 1) {
-                BellmanFord::runMatrix(matrixGraph, startVertex);
-            } else if (structure == 2) {
-                BellmanFord::runList(listGraph, startVertex);
-            }
-        } else if (algorithm == 5) { // Ford-Fulkerson
-            if (structure == 1) {
-                FordFulkerson::runMatrix(matrixGraph, startVertex, endVertex);
-            } else if (structure == 2) {
-                FordFulkerson::runList(listGraph, startVertex, endVertex);
+    int selectedProblem = static_cast<int>(Parameters::problem);
+    int selectedAlgorithm = static_cast<int>(Parameters::algorithm);
+    int selectedStructure = static_cast<int>(Parameters::structure);
+
+    int startVertex = Parameters::vertexStart;
+    int endVertex = Parameters::vertexEnd;
+
+    if (startVertex < 0 || startVertex >= vertices) {
+        startVertex = 0;
+    }
+
+    if (endVertex < 0 || endVertex >= vertices) {
+        endVertex = vertices - 1;
+    }
+
+    int algorithms[5];
+    int algorithmsCount = 0;
+
+    if (selectedAlgorithm == 0) { // allAlgorithms
+        if (selectedProblem == 0) { // MST
+            algorithms[algorithmsCount++] = 1; // Prim
+            algorithms[algorithmsCount++] = 2; // Kruskal
+        } else if (selectedProblem == 1) { // SP
+            algorithms[algorithmsCount++] = 3; // Dijkstra
+            algorithms[algorithmsCount++] = 4; // Bellman-Ford
+        } else if (selectedProblem == 2) { // MF
+            algorithms[algorithmsCount++] = 5; // Ford-Fulkerson
+        } else {
+            algorithms[algorithmsCount++] = 1;
+            algorithms[algorithmsCount++] = 2;
+            algorithms[algorithmsCount++] = 3;
+            algorithms[algorithmsCount++] = 4;
+            algorithms[algorithmsCount++] = 5;
+        }
+    } else {
+        algorithms[algorithmsCount++] = selectedAlgorithm;
+    }
+
+    int structures[2];
+    int structuresCount = 0;
+
+    if (selectedStructure == 0) { // allStructures
+        structures[structuresCount++] = 1; // incidence matrix
+        structures[structuresCount++] = 2; // adjacency list
+    } else {
+        structures[structuresCount++] = selectedStructure;
+    }
+
+    for (int i = 0; i < algorithmsCount; i++) {
+        for (int j = 0; j < structuresCount; j++) {
+            int algorithm = algorithms[i];
+            int structure = structures[j];
+
+            if (algorithm == 1) { // Prim
+                if (structure == 1) {
+                    runAndSaveOutput("Algorytm: Prim | Reprezentacja: macierz incydencji", [&]() {
+                        Prim::runMatrix(matrixGraph);
+                    });
+                } else if (structure == 2) {
+                    runAndSaveOutput("Algorytm: Prim | Reprezentacja: lista sasiedztwa", [&]() {
+                        Prim::runList(listGraph);
+                    });
+                }
+            } else if (algorithm == 2) { // Kruskal
+                if (structure == 1) {
+                    runAndSaveOutput("Algorytm: Kruskal | Reprezentacja: macierz incydencji", [&]() {
+                        Kruskal::runMatrix(matrixGraph);
+                    });
+                } else if (structure == 2) {
+                    runAndSaveOutput("Algorytm: Kruskal | Reprezentacja: lista sasiedztwa", [&]() {
+                        Kruskal::runList(listGraph);
+                    });
+                }
+            } else if (algorithm == 3) { // Dijkstra
+                if (structure == 1) {
+                    runAndSaveOutput("Algorytm: Dijkstra | Reprezentacja: macierz incydencji", [&]() {
+                        Dijkstra::runMatrix(matrixGraph, startVertex);
+                    });
+                } else if (structure == 2) {
+                    runAndSaveOutput("Algorytm: Dijkstra | Reprezentacja: lista sasiedztwa", [&]() {
+                        Dijkstra::runList(listGraph, startVertex);
+                    });
+                }
+            } else if (algorithm == 4) { // Bellman-Ford
+                if (structure == 1) {
+                    runAndSaveOutput("Algorytm: Bellman-Ford | Reprezentacja: macierz incydencji", [&]() {
+                        BellmanFord::runMatrix(matrixGraph, startVertex);
+                    });
+                } else if (structure == 2) {
+                    runAndSaveOutput("Algorytm: Bellman-Ford | Reprezentacja: lista sasiedztwa", [&]() {
+                        BellmanFord::runList(listGraph, startVertex);
+                    });
+                }
+            } else if (algorithm == 5) { // Ford-Fulkerson
+                if (structure == 1) {
+                    runAndSaveOutput("Algorytm: Ford-Fulkerson | Reprezentacja: macierz incydencji", [&]() {
+                        FordFulkerson::runMatrix(matrixGraph, startVertex, endVertex);
+                    });
+                } else if (structure == 2) {
+                    runAndSaveOutput("Algorytm: Ford-Fulkerson | Reprezentacja: lista sasiedztwa", [&]() {
+                        FordFulkerson::runList(listGraph, startVertex, endVertex);
+                    });
+                }
             }
         }
-
-        return;
     }
 
-    std::cout << "\nKruskal - macierz:\n";
-    Kruskal::runMatrix(matrixGraph);
-
-    std::cout << "\nKruskal - lista:\n";
-    Kruskal::runList(listGraph);
-
-    std::cout << "\nDijkstra - macierz:\n";
-    Dijkstra::runMatrix(matrixGraph, 0);
-
-    std::cout << "\nDijkstra - lista:\n";
-    Dijkstra::runList(listGraph, 0);
-
-    std::cout << "\nBellman-Ford - macierz:\n";
-    BellmanFord::runMatrix(matrixGraph, 0);
-
-    std::cout << "\nBellman-Ford - lista:\n";
-    BellmanFord::runList(listGraph, 0);
-
-    std::cout << "\nFord-Fulkerson - macierz:\n";
-    FordFulkerson::runMatrix(matrixGraph, 0, 3);
-
-    std::cout << "\nFord-Fulkerson - lista:\n";
-    FordFulkerson::runList(listGraph, 0, 3);
+    if (saveToFile) {
+        outputFile.close();
+        std::cout << "Wynik zapisano do pliku: " << Parameters::outputFile << "\n";
+    }
 }
 
 void saveResult(

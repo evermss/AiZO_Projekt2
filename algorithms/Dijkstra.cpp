@@ -1,21 +1,35 @@
 #include "Dijkstra.h"
 #include <iostream>
 
+static void printDijkstraPath(int* previous, int vertex) {
+    if (vertex == -1) {
+        return;
+    }
+
+    if (previous[vertex] != -1) {
+        printDijkstraPath(previous, previous[vertex]);
+        std::cout << " -> ";
+    }
+
+    std::cout << vertex;
+}
+
 void Dijkstra::runMatrix(MatrixGraph& graph, int startVertex) {
     int vertices = graph.getVertices();
 
     bool* visited = new bool[vertices];
     int* distance = new int[vertices];
+    int* previous = new int[vertices];
 
     for (int i = 0; i < vertices; i++) {
         visited[i] = false;
         distance[i] = 999999;
+        previous[i] = -1;
     }
 
     distance[startVertex] = 0;
 
     for (int count = 0; count < vertices - 1; count++) {
-
         int min = 999999;
         int u = -1;
 
@@ -33,31 +47,37 @@ void Dijkstra::runMatrix(MatrixGraph& graph, int startVertex) {
         visited[u] = true;
 
         for (int v = 0; v < vertices; v++) {
-
             int weight = graph.getEdge(u, v);
 
             if (weight > 0 &&
                 !visited[v] &&
+                distance[u] != 999999 &&
                 distance[u] + weight < distance[v]) {
 
                 distance[v] = distance[u] + weight;
+                previous[v] = u;
             }
         }
     }
 
     std::cout << "Dijkstra:\n";
+    std::cout << "Start vertex: " << startVertex << "\n";
 
     for (int i = 0; i < vertices; i++) {
-        std::cout << startVertex
-                  << " -> "
-                  << i
-                  << " = "
-                  << distance[i]
-                  << "\n";
+        std::cout << "To vertex " << i << ": ";
+
+        if (distance[i] == 999999) {
+            std::cout << "brak sciezki\n";
+        } else {
+            std::cout << "cost = " << distance[i] << ", path = ";
+            printDijkstraPath(previous, i);
+            std::cout << "\n";
+        }
     }
 
     delete[] visited;
     delete[] distance;
+    delete[] previous;
 }
 
 void Dijkstra::runList(ListGraph& graph, int startVertex) {
@@ -65,16 +85,17 @@ void Dijkstra::runList(ListGraph& graph, int startVertex) {
 
     bool* visited = new bool[vertices];
     int* distance = new int[vertices];
+    int* previous = new int[vertices];
 
     for (int i = 0; i < vertices; i++) {
         visited[i] = false;
         distance[i] = 999999;
+        previous[i] = -1;
     }
 
     distance[startVertex] = 0;
 
     for (int count = 0; count < vertices - 1; count++) {
-
         int min = 999999;
         int u = -1;
 
@@ -94,31 +115,37 @@ void Dijkstra::runList(ListGraph& graph, int startVertex) {
         LinkedList<Edge>& list = graph.getAdjList(u);
 
         for (int i = 0; i < list.getSize(); i++) {
-
             Edge edge = list.get(i);
 
             int v = edge.getEnd();
             int weight = edge.getWeight();
 
             if (!visited[v] &&
+                distance[u] != 999999 &&
                 distance[u] + weight < distance[v]) {
 
                 distance[v] = distance[u] + weight;
+                previous[v] = u;
             }
         }
     }
 
     std::cout << "Dijkstra:\n";
+    std::cout << "Start vertex: " << startVertex << "\n";
 
     for (int i = 0; i < vertices; i++) {
-        std::cout << startVertex
-                  << " -> "
-                  << i
-                  << " = "
-                  << distance[i]
-                  << "\n";
+        std::cout << "To vertex " << i << ": ";
+
+        if (distance[i] == 999999) {
+            std::cout << "brak sciezki\n";
+        } else {
+            std::cout << "cost = " << distance[i] << ", path = ";
+            printDijkstraPath(previous, i);
+            std::cout << "\n";
+        }
     }
 
     delete[] visited;
     delete[] distance;
+    delete[] previous;
 }
