@@ -1,5 +1,6 @@
 #include "Dijkstra.h"
 #include <iostream>
+#include "Parameters.h"
 
 static void printDijkstraPath(int* previous, int vertex) {
     if (vertex == -1) {
@@ -60,19 +61,22 @@ void Dijkstra::runMatrix(MatrixGraph& graph, int startVertex) {
         }
     }
 
-    std::cout << "Dijkstra:\n";
+    int endVertex = Parameters::vertexEnd;
+
+    if (endVertex < 0 || endVertex >= vertices) {
+        endVertex = vertices - 1;
+    }
+
     std::cout << "Start vertex: " << startVertex << "\n";
+    std::cout << "End vertex: " << endVertex << "\n";
+    std::cout << "Shortest path result:\n";
 
-    for (int i = 0; i < vertices; i++) {
-        std::cout << "To vertex " << i << ": ";
-
-        if (distance[i] == 999999) {
-            std::cout << "brak sciezki\n";
-        } else {
-            std::cout << "cost = " << distance[i] << ", path = ";
-            printDijkstraPath(previous, i);
-            std::cout << "\n";
-        }
+    if (distance[endVertex] == 999999) {
+        std::cout << "brak sciezki\n";
+    } else {
+        std::cout << "cost = " << distance[endVertex] << ", path = ";
+        printDijkstraPath(previous, endVertex);
+        std::cout << "\n";
     }
 
     delete[] visited;
@@ -130,19 +134,22 @@ void Dijkstra::runList(ListGraph& graph, int startVertex) {
         }
     }
 
-    std::cout << "Dijkstra:\n";
+    int endVertex = Parameters::vertexEnd;
+
+    if (endVertex < 0 || endVertex >= vertices) {
+        endVertex = vertices - 1;
+    }
+
     std::cout << "Start vertex: " << startVertex << "\n";
+    std::cout << "End vertex: " << endVertex << "\n";
+    std::cout << "Shortest path result:\n";
 
-    for (int i = 0; i < vertices; i++) {
-        std::cout << "To vertex " << i << ": ";
-
-        if (distance[i] == 999999) {
-            std::cout << "brak sciezki\n";
-        } else {
-            std::cout << "cost = " << distance[i] << ", path = ";
-            printDijkstraPath(previous, i);
-            std::cout << "\n";
-        }
+    if (distance[endVertex] == 999999) {
+        std::cout << "brak sciezki\n";
+    } else {
+        std::cout << "cost = " << distance[endVertex] << ", path = ";
+        printDijkstraPath(previous, endVertex);
+        std::cout << "\n";
     }
 
     delete[] visited;

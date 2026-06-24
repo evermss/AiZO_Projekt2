@@ -174,6 +174,18 @@ void runSingleTest() {
         structures[structuresCount++] = selectedStructure;
     }
 
+    for (int j = 0; j < structuresCount; j++) {
+        if (structures[j] == 1) {
+            runAndSaveOutput("Badana reprezentacja grafu: macierz incydencji", [&]() {
+                matrixGraph.print();
+            });
+        } else if (structures[j] == 2) {
+            runAndSaveOutput("Badana reprezentacja grafu: lista sasiedztwa", [&]() {
+                listGraph.print();
+            });
+        }
+    }
+
     for (int i = 0; i < algorithmsCount; i++) {
         for (int j = 0; j < structuresCount; j++) {
             int algorithm = algorithms[i];

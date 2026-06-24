@@ -1,4 +1,5 @@
 #include "BellmanFord.h"
+#include "Parameters.h"
 #include <iostream>
 
 static void printBellmanFordPath(int* previous, int vertex) {
@@ -43,19 +44,23 @@ void BellmanFord::runMatrix(MatrixGraph& graph, int startVertex) {
         }
     }
 
+    int endVertex = Parameters::vertexEnd;
+
+    if (endVertex < 0 || endVertex >= vertices) {
+        endVertex = vertices - 1;
+    }
+
     std::cout << "Bellman-Ford:\n";
     std::cout << "Start vertex: " << startVertex << "\n";
+    std::cout << "End vertex: " << endVertex << "\n";
+    std::cout << "Shortest path result:\n";
 
-    for (int i = 0; i < vertices; i++) {
-        std::cout << "To vertex " << i << ": ";
-
-        if (distance[i] == 999999) {
-            std::cout << "brak sciezki\n";
-        } else {
-            std::cout << "cost = " << distance[i] << ", path = ";
-            printBellmanFordPath(previous, i);
-            std::cout << "\n";
-        }
+    if (distance[endVertex] == 999999) {
+        std::cout << "brak sciezki\n";
+    } else {
+        std::cout << "cost = " << distance[endVertex] << ", path = ";
+        printBellmanFordPath(previous, endVertex);
+        std::cout << "\n";
     }
 
     delete[] distance;
@@ -96,19 +101,23 @@ void BellmanFord::runList(ListGraph& graph, int startVertex) {
         }
     }
 
+    int endVertex = Parameters::vertexEnd;
+
+    if (endVertex < 0 || endVertex >= vertices) {
+        endVertex = vertices - 1;
+    }
+
     std::cout << "Bellman-Ford:\n";
     std::cout << "Start vertex: " << startVertex << "\n";
+    std::cout << "End vertex: " << endVertex << "\n";
+    std::cout << "Shortest path result:\n";
 
-    for (int i = 0; i < vertices; i++) {
-        std::cout << "To vertex " << i << ": ";
-
-        if (distance[i] == 999999) {
-            std::cout << "brak sciezki\n";
-        } else {
-            std::cout << "cost = " << distance[i] << ", path = ";
-            printBellmanFordPath(previous, i);
-            std::cout << "\n";
-        }
+    if (distance[endVertex] == 999999) {
+        std::cout << "brak sciezki\n";
+    } else {
+        std::cout << "cost = " << distance[endVertex] << ", path = ";
+        printBellmanFordPath(previous, endVertex);
+        std::cout << "\n";
     }
 
     delete[] distance;
