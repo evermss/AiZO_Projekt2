@@ -2,27 +2,22 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <limits>
 
 #include "Parameters.h"
 #include "MatrixGraph.h"
 #include "ListGraph.h"
 #include "FileLoader.h"
+#include "Edge.h"
 #include "Prim.h"
 #include "Kruskal.h"
 #include "Dijkstra.h"
 #include "BellmanFord.h"
 #include "FordFulkerson.h"
 #include "Timer.h"
-#include <chrono>
-#include <ctime>
-#include <iomanip>
-
-class NullBuffer : public std::streambuf {
-protected:
-    int_type overflow(int_type c) override {
-        return traits_type::not_eof(c);
-    }
-};
 
 void showHelp() {
     std::cout << "AiZO Projekt 2 - grafy\n";
@@ -32,8 +27,176 @@ void showHelp() {
     std::cout << " - --benchmark  -> badania\n";
     std::cout << "\n";
     std::cout << "Dodatkowe tryby demonstracyjne projektu:\n";
-    std::cout << " - --snap            -> porownanie wyniku MST z NetworkX na datasecie SNAP\n";
+    std::cout << " - --snap            -> porownanie MST na datasecie SNAP\n";
     std::cout << " - --snapAlgorithms  -> pomiar czasow algorytmow na datasecie SNAP\n";
+}
+
+bool isAlgorithmCompatible(int problem, int algorithm) {
+    if (problem == 0) {
+        return algorithm == 1 || algorithm == 2;
+    }
+
+    if (problem == 1) {
+        return algorithm == 3 || algorithm == 4;
+    }
+
+    if (problem == 2) {
+        return algorithm == 5;
+    }
+
+    return false;
+}
+
+std::string getCurrentDateTime() {
+    std::time_t now = std::time(nullptr);
+    std::tm localTime{};
+
+#ifdef _WIN32
+    localtime_s(&localTime, &now);
+#else
+    localtime_r(&now, &localTime);
+#endif
+
+    std::ostringstream stream;
+    stream << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S");
+
+    return stream.str();
+}
+
+std::string getProblemName(int problem) {
+    if (problem == 0) {
+        return "MST";
+    }
+
+    if (problem == 1) {
+        return "SP";
+    }
+
+    if (problem == 2) {
+        return "MF";
+    }
+
+    return "UNKNOWN";
+}
+
+int findSetLocal(int* parent, int vertex) {
+    if (parent[vertex] != vertex) {
+        parent[vertex] = findSetLocal(parent, parent[vertex]);
+    }
+
+    return parent[vertex];
+}
+
+void unionSetsLocal(int* parent, int* rank, int first, int second) {
+    int firstRoot = findSetLocal(parent, first);
+    int secondRoot = findSetLocal(parent, second);
+
+    if (firstRoot == secondRoot) {
+        return;
+    }
+
+    if (rank[firstRoot] < rank[secondRoot]) {
+        parent[firstRoot] = secondRoot;
+    } else if (rank[firstRoot] > rank[secondRoot]) {
+        parent[secondRoot] = firstRoot;
+    } else {
+        parent[secondRoot] = firstRoot;
+        rank[firstRoot]++;
+    }
+}
+
+void sortEdgesByWeightLocal(Edge* edges, int edgesCount) {
+    for (int gap = edgesCount / 2; gap > 0; gap /= 2) {
+        for (int i = gap; i < edgesCount; i++) {
+            Edge temp = edges[i];
+            int j = i;
+
+            while (j >= gap &&
+                   edges[j - gap].getWeight() > temp.getWeight()) {
+
+                edges[j] = edges[j - gap];
+                j -= gap;
+            }
+
+            edges[j] = temp;
+        }
+    }
+}
+
+template <typename GraphType>
+long long calculateKruskalMstWeight(const GraphType& graph) {
+    int vertices = graph.getVertices();
+
+    if (vertices <= 0) {
+        return 0;
+    }
+
+    int edgesCount = 0;
+
+    graph.forEachEdge(
+        [&](int start, int end, int weight) {
+            (void) start;
+            (void) end;
+            (void) weight;
+
+            edgesCount++;
+        }
+    );
+
+    if (edgesCount == 0) {
+        return 0;
+    }
+
+    Edge* edges = new Edge[edgesCount];
+    int currentEdge = 0;
+
+    graph.forEachEdge(
+        [&](int start, int end, int weight) {
+            edges[currentEdge] = Edge(start, end, weight);
+            currentEdge++;
+        }
+    );
+
+    sortEdgesByWeightLocal(edges, edgesCount);
+
+    int* parent = new int[vertices];
+    int* rank = new int[vertices];
+
+    for (int i = 0; i < vertices; i++) {
+        parent[i] = i;
+        rank[i] = 0;
+    }
+
+    long long totalWeight = 0;
+    int selectedEdges = 0;
+
+    for (int i = 0; i < edgesCount && selectedEdges < vertices - 1; i++) {
+        int start = edges[i].getStart();
+        int end = edges[i].getEnd();
+        int weight = edges[i].getWeight();
+
+        if (start < 0 || start >= vertices ||
+            end < 0 || end >= vertices) {
+
+            continue;
+        }
+
+        int startRoot = findSetLocal(parent, start);
+        int endRoot = findSetLocal(parent, end);
+
+        if (startRoot != endRoot) {
+            totalWeight += weight;
+            selectedEdges++;
+
+            unionSetsLocal(parent, rank, startRoot, endRoot);
+        }
+    }
+
+    delete[] edges;
+    delete[] parent;
+    delete[] rank;
+
+    return totalWeight;
 }
 
 void runSingleTest() {
@@ -42,14 +205,21 @@ void runSingleTest() {
         : Parameters::inputFile;
 
     std::ifstream file(inputFile);
+
     if (!file.is_open()) {
-        std::cout << "Blad: nie mozna otworzyc pliku wejściowego: " << inputFile << std::endl;
+        std::cout << "Blad: nie mozna otworzyc pliku wejsciowego: "
+                  << inputFile
+                  << "\n";
         return;
     }
 
     int vertices = 0;
     int edges = 0;
-    file >> vertices >> edges;
+
+    if (!(file >> vertices >> edges)) {
+        std::cout << "Blad: niepoprawny format pliku wejsciowego.\n";
+        return;
+    }
 
     int maxVertexId = -1;
     int from = 0;
@@ -60,6 +230,7 @@ void runSingleTest() {
         if (from > maxVertexId) {
             maxVertexId = from;
         }
+
         if (to > maxVertexId) {
             maxVertexId = to;
         }
@@ -69,6 +240,11 @@ void runSingleTest() {
 
     if (maxVertexId + 1 > vertices) {
         vertices = maxVertexId + 1;
+    }
+
+    if (vertices <= 0) {
+        std::cout << "Blad: graf nie ma wierzcholkow.\n";
+        return;
     }
 
     MatrixGraph matrixGraph(vertices);
@@ -85,7 +261,8 @@ void runSingleTest() {
 
         if (!outputFile.is_open()) {
             std::cout << "Blad: nie mozna otworzyc pliku wyjsciowego: "
-                      << Parameters::outputFile << std::endl;
+                      << Parameters::outputFile
+                      << "\n";
             return;
         }
     }
@@ -126,19 +303,32 @@ void runSingleTest() {
     writeLine("Liczba wierzcholkow: " + std::to_string(vertices));
     writeLine("Liczba krawedzi z pliku: " + std::to_string(edges));
 
-    if (Parameters::inputFile.empty()) {
-        runAndSaveOutput("Reprezentacja: macierz incydencji", [&]() {
-            matrixGraph.print();
-        });
-
-        runAndSaveOutput("Reprezentacja: lista sasiedztwa", [&]() {
-            listGraph.print();
-        });
-    }
-
     int selectedProblem = static_cast<int>(Parameters::problem);
     int selectedAlgorithm = static_cast<int>(Parameters::algorithm);
     int selectedStructure = static_cast<int>(Parameters::structure);
+
+    if (selectedProblem < 0 || selectedProblem > 2) {
+        writeLine("Blad: niepoprawny problem. 0 = MST, 1 = SP, 2 = MF.");
+        return;
+    }
+
+    if (selectedAlgorithm < 0 || selectedAlgorithm > 5) {
+        writeLine("Blad: niepoprawny algorytm.");
+        return;
+    }
+
+    if (selectedStructure < 0 || selectedStructure > 2) {
+        writeLine("Blad: niepoprawna struktura.");
+        return;
+    }
+
+    if (
+        selectedAlgorithm != 0 &&
+        !isAlgorithmCompatible(selectedProblem, selectedAlgorithm)
+    ) {
+        writeLine("Blad: wybrany algorytm nie pasuje do wybranego problemu.");
+        return;
+    }
 
     int startVertex = Parameters::vertexStart;
     int endVertex = Parameters::vertexEnd;
@@ -151,23 +341,25 @@ void runSingleTest() {
         endVertex = vertices - 1;
     }
 
+    if (startVertex == endVertex && vertices > 1) {
+        if (endVertex == vertices - 1) {
+            endVertex = 0;
+        } else {
+            endVertex = vertices - 1;
+        }
+    }
+
     int algorithms[5];
     int algorithmsCount = 0;
 
-    if (selectedAlgorithm == 0) { // allAlgorithms
-        if (selectedProblem == 0) { // MST
-            algorithms[algorithmsCount++] = 1; // Prim
-            algorithms[algorithmsCount++] = 2; // Kruskal
-        } else if (selectedProblem == 1) { // SP
-            algorithms[algorithmsCount++] = 3; // Dijkstra
-            algorithms[algorithmsCount++] = 4; // Bellman-Ford
-        } else if (selectedProblem == 2) { // MF
-            algorithms[algorithmsCount++] = 5; // Ford-Fulkerson
-        } else {
+    if (selectedAlgorithm == 0) {
+        if (selectedProblem == 0) {
             algorithms[algorithmsCount++] = 1;
             algorithms[algorithmsCount++] = 2;
+        } else if (selectedProblem == 1) {
             algorithms[algorithmsCount++] = 3;
             algorithms[algorithmsCount++] = 4;
+        } else if (selectedProblem == 2) {
             algorithms[algorithmsCount++] = 5;
         }
     } else {
@@ -177,9 +369,9 @@ void runSingleTest() {
     int structures[2];
     int structuresCount = 0;
 
-    if (selectedStructure == 0) { // allStructures
-        structures[structuresCount++] = 1; // incidence matrix
-        structures[structuresCount++] = 2; // adjacency list
+    if (selectedStructure == 0) {
+        structures[structuresCount++] = 1;
+        structures[structuresCount++] = 2;
     } else {
         structures[structuresCount++] = selectedStructure;
     }
@@ -201,7 +393,7 @@ void runSingleTest() {
             int algorithm = algorithms[i];
             int structure = structures[j];
 
-            if (algorithm == 1) { // Prim
+            if (algorithm == 1) {
                 if (structure == 1) {
                     runAndSaveOutput("Algorytm: Prim | Reprezentacja: macierz incydencji", [&]() {
                         Prim::runMatrix(matrixGraph);
@@ -211,7 +403,7 @@ void runSingleTest() {
                         Prim::runList(listGraph);
                     });
                 }
-            } else if (algorithm == 2) { // Kruskal
+            } else if (algorithm == 2) {
                 if (structure == 1) {
                     runAndSaveOutput("Algorytm: Kruskal | Reprezentacja: macierz incydencji", [&]() {
                         Kruskal::runMatrix(matrixGraph);
@@ -221,27 +413,27 @@ void runSingleTest() {
                         Kruskal::runList(listGraph);
                     });
                 }
-            } else if (algorithm == 3) { // Dijkstra
+            } else if (algorithm == 3) {
                 if (structure == 1) {
                     runAndSaveOutput("Algorytm: Dijkstra | Reprezentacja: macierz incydencji", [&]() {
-                        Dijkstra::runMatrix(matrixGraph, startVertex);
+                        Dijkstra::runMatrix(matrixGraph, startVertex, endVertex);
                     });
                 } else if (structure == 2) {
                     runAndSaveOutput("Algorytm: Dijkstra | Reprezentacja: lista sasiedztwa", [&]() {
-                        Dijkstra::runList(listGraph, startVertex);
+                        Dijkstra::runList(listGraph, startVertex, endVertex);
                     });
                 }
-            } else if (algorithm == 4) { // Bellman-Ford
+            } else if (algorithm == 4) {
                 if (structure == 1) {
                     runAndSaveOutput("Algorytm: Bellman-Ford | Reprezentacja: macierz incydencji", [&]() {
-                        BellmanFord::runMatrix(matrixGraph, startVertex);
+                        BellmanFord::runMatrix(matrixGraph, startVertex, endVertex);
                     });
                 } else if (structure == 2) {
                     runAndSaveOutput("Algorytm: Bellman-Ford | Reprezentacja: lista sasiedztwa", [&]() {
-                        BellmanFord::runList(listGraph, startVertex);
+                        BellmanFord::runList(listGraph, startVertex, endVertex);
                     });
                 }
-            } else if (algorithm == 5) { // Ford-Fulkerson
+            } else if (algorithm == 5) {
                 if (structure == 1) {
                     runAndSaveOutput("Algorytm: Ford-Fulkerson | Reprezentacja: macierz incydencji", [&]() {
                         FordFulkerson::runMatrix(matrixGraph, startVertex, endVertex);
@@ -257,40 +449,10 @@ void runSingleTest() {
 
     if (saveToFile) {
         outputFile.close();
-        std::cout << "Wynik zapisano do pliku: " << Parameters::outputFile << "\n";
+        std::cout << "Wynik zapisano do pliku: "
+                  << Parameters::outputFile
+                  << "\n";
     }
-}
-
-std::string getCurrentDateTime() {
-    std::time_t now = std::time(nullptr);
-    std::tm localTime{};
-
-#ifdef _WIN32
-    localtime_s(&localTime, &now);
-#else
-    localtime_r(&now, &localTime);
-#endif
-
-    std::ostringstream stream;
-    stream << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S");
-
-    return stream.str();
-}
-
-std::string getProblemName(int problem) {
-    if (problem == 0) {
-        return "MST";
-    }
-
-    if (problem == 1) {
-        return "SP";
-    }
-
-    if (problem == 2) {
-        return "MF";
-    }
-
-    return "UNKNOWN";
 }
 
 void saveResult(
@@ -351,46 +513,6 @@ int generateCommonBenchmarkGraph(
         }
     }
 
-    unsigned int seed =
-        123456789u
-        + static_cast<unsigned int>(vertices) * 97u
-        + static_cast<unsigned int>(density) * 31u
-        + static_cast<unsigned int>(problem) * 13u;
-
-    auto nextRandom = [&seed]() {
-        seed = seed * 1664525u + 1013904223u;
-        return seed;
-    };
-
-    auto randomWeight = [&nextRandom]() {
-        return 1 + static_cast<int>(nextRandom() % 99u);
-    };
-
-    auto addEdgeToBoth = [&](
-        int from,
-        int to,
-        int weight
-    ) {
-        if (from < 0 || from >= vertices || to < 0 || to >= vertices) {
-            return false;
-        }
-
-        if (from == to) {
-            return false;
-        }
-
-        if (used[from][to]) {
-            return false;
-        }
-
-        used[from][to] = true;
-
-        matrixGraph.addEdge(from, to, weight);
-        listGraph.addEdge(from, to, weight);
-
-        return true;
-    };
-
     bool mstProblem = problem == 0;
 
     long long maxEdges = 0;
@@ -417,6 +539,57 @@ int generateCommonBenchmarkGraph(
     }
 
     int targetEdges = static_cast<int>(targetEdgesLong);
+
+    int maxWeight = targetEdges * 4 / 5;
+
+    if (maxWeight < 1) {
+        maxWeight = 1;
+    }
+
+    unsigned int seed =
+        123456789u
+        + static_cast<unsigned int>(vertices) * 97u
+        + static_cast<unsigned int>(density) * 31u
+        + static_cast<unsigned int>(problem) * 13u;
+
+    auto nextRandom = [&seed]() {
+        seed = seed * 1664525u + 1013904223u;
+        return seed;
+    };
+
+    auto randomWeight = [&nextRandom, maxWeight]() {
+        return 1 + static_cast<int>(
+            nextRandom() % static_cast<unsigned int>(maxWeight)
+        );
+    };
+
+    auto addEdgeToBoth = [&](
+        int from,
+        int to,
+        int weight
+    ) {
+        if (from < 0 || from >= vertices ||
+            to < 0 || to >= vertices) {
+
+            return false;
+        }
+
+        if (from == to) {
+            return false;
+        }
+
+        if (used[from][to]) {
+            return false;
+        }
+
+        used[from][to] = true;
+
+        matrixGraph.addEdge(from, to, weight);
+        listGraph.addEdge(from, to, weight);
+
+        return true;
+    };
+
     int currentEdges = 0;
 
     if (mstProblem) {
@@ -468,12 +641,10 @@ int generateCommonBenchmarkGraph(
             continue;
         }
 
-        if (mstProblem) {
-            if (from > to) {
-                int temp = from;
-                from = to;
-                to = temp;
-            }
+        if (mstProblem && from > to) {
+            int temp = from;
+            from = to;
+            to = temp;
         }
 
         if (addEdgeToBoth(from, to, randomWeight())) {
@@ -503,22 +674,6 @@ void runBenchmarkForGraph(
     MatrixGraph matrixGraph(vertices);
     ListGraph listGraph(vertices);
 
-    const int TESTS = iterations;
-
-    auto shouldRunProblem = [problem](int expectedProblem) {
-        return problem == expectedProblem;
-    };
-
-    auto shouldRunAlgorithm = [algorithm](int expectedAlgorithm) {
-        return algorithm == 0 || algorithm == expectedAlgorithm;
-    };
-
-    auto shouldRunStructure = [structure](int expectedStructure) {
-        return structure == 0 || structure == expectedStructure;
-    };
-
-    bool anyTestExecuted = false;
-
     int startVertex = Parameters::vertexStart;
     int endVertex = Parameters::vertexEnd;
 
@@ -537,31 +692,43 @@ void runBenchmarkForGraph(
             endVertex = vertices - 1;
         }
     }
+
     int edgeCount = generateCommonBenchmarkGraph(
-      matrixGraph,
-      listGraph,
-      vertices,
-      density,
-      problem,
-      startVertex,
-      endVertex
-  );
+        matrixGraph,
+        listGraph,
+        vertices,
+        density,
+        problem,
+        startVertex,
+        endVertex
+    );
+
+    auto shouldRunProblem = [problem](int expectedProblem) {
+        return problem == expectedProblem;
+    };
+
+    auto shouldRunAlgorithm = [algorithm](int expectedAlgorithm) {
+        return algorithm == 0 || algorithm == expectedAlgorithm;
+    };
+
+    auto shouldRunStructure = [structure](int expectedStructure) {
+        return structure == 0 || structure == expectedStructure;
+    };
+
+    bool anyTestExecuted = false;
 
     auto measureAndSave = [&](
-    const std::string& algorithmName,
-    const std::string& structureName,
-    auto algorithmCall
-) {
+        const std::string& algorithmName,
+        const std::string& structureName,
+        auto algorithmCall
+    ) {
         anyTestExecuted = true;
 
         long long sum = 0;
         long long minTime = 0;
         long long maxTime = 0;
 
-        NullBuffer nullBuffer;
-        std::streambuf* originalBuffer = std::cout.rdbuf(&nullBuffer);
-
-        for (int i = 0; i < TESTS; i++) {
+        for (int i = 0; i < iterations; i++) {
             Timer timer;
 
             timer.start();
@@ -579,8 +746,6 @@ void runBenchmarkForGraph(
             }
         }
 
-        std::cout.rdbuf(originalBuffer);
-
         saveResult(
             file,
             testName,
@@ -595,18 +760,17 @@ void runBenchmarkForGraph(
             endVertex,
             minTime,
             maxTime,
-            sum / TESTS
+            sum / iterations
         );
     };
 
-    // MST: Prim
     if (
         shouldRunProblem(0) &&
         shouldRunAlgorithm(1) &&
         shouldRunStructure(1)
     ) {
         measureAndSave("Prim", "matrix", [&]() {
-            Prim::runMatrix(matrixGraph);
+            Prim::runMatrix(matrixGraph, false);
         });
     }
 
@@ -616,18 +780,17 @@ void runBenchmarkForGraph(
         shouldRunStructure(2)
     ) {
         measureAndSave("Prim", "list", [&]() {
-            Prim::runList(listGraph);
+            Prim::runList(listGraph, false);
         });
     }
 
-    // MST: Kruskal
     if (
         shouldRunProblem(0) &&
         shouldRunAlgorithm(2) &&
         shouldRunStructure(1)
     ) {
         measureAndSave("Kruskal", "matrix", [&]() {
-            Kruskal::runMatrix(matrixGraph);
+            Kruskal::runMatrix(matrixGraph, false);
         });
     }
 
@@ -637,18 +800,17 @@ void runBenchmarkForGraph(
         shouldRunStructure(2)
     ) {
         measureAndSave("Kruskal", "list", [&]() {
-            Kruskal::runList(listGraph);
+            Kruskal::runList(listGraph, false);
         });
     }
 
-    // SP: Dijkstra
     if (
         shouldRunProblem(1) &&
         shouldRunAlgorithm(3) &&
         shouldRunStructure(1)
     ) {
         measureAndSave("Dijkstra", "matrix", [&]() {
-            Dijkstra::runMatrix(matrixGraph, startVertex);
+            Dijkstra::runMatrix(matrixGraph, startVertex, endVertex, false);
         });
     }
 
@@ -658,18 +820,17 @@ void runBenchmarkForGraph(
         shouldRunStructure(2)
     ) {
         measureAndSave("Dijkstra", "list", [&]() {
-            Dijkstra::runList(listGraph, startVertex);
+            Dijkstra::runList(listGraph, startVertex, endVertex, false);
         });
     }
 
-    // SP: Bellman-Ford
     if (
         shouldRunProblem(1) &&
         shouldRunAlgorithm(4) &&
         shouldRunStructure(1)
     ) {
         measureAndSave("BellmanFord", "matrix", [&]() {
-            BellmanFord::runMatrix(matrixGraph, startVertex);
+            BellmanFord::runMatrix(matrixGraph, startVertex, endVertex, false);
         });
     }
 
@@ -679,18 +840,17 @@ void runBenchmarkForGraph(
         shouldRunStructure(2)
     ) {
         measureAndSave("BellmanFord", "list", [&]() {
-            BellmanFord::runList(listGraph, startVertex);
+            BellmanFord::runList(listGraph, startVertex, endVertex, false);
         });
     }
 
-    // MF: Ford-Fulkerson
     if (
         shouldRunProblem(2) &&
         shouldRunAlgorithm(5) &&
         shouldRunStructure(1)
     ) {
         measureAndSave("FordFulkerson", "matrix", [&]() {
-            FordFulkerson::runMatrix(matrixGraph, startVertex, endVertex);
+            FordFulkerson::runMatrix(matrixGraph, startVertex, endVertex, false);
         });
     }
 
@@ -700,7 +860,7 @@ void runBenchmarkForGraph(
         shouldRunStructure(2)
     ) {
         measureAndSave("FordFulkerson", "list", [&]() {
-            FordFulkerson::runList(listGraph, startVertex, endVertex);
+            FordFulkerson::runList(listGraph, startVertex, endVertex, false);
         });
     }
 
@@ -709,8 +869,8 @@ void runBenchmarkForGraph(
             << "Blad: wybrany algorytm nie pasuje do wybranego problemu.\n";
     }
 }
+
 void runBenchmark() {
-    // Parametry odczytane przez bibliotekę prowadzącego.
     const std::string resultsFile = Parameters::resultsFile;
     const int vertices = Parameters::vertexCount;
     const int density = Parameters::density;
@@ -720,33 +880,26 @@ void runBenchmark() {
     const int algorithm = static_cast<int>(Parameters::algorithm);
     const int structure = static_cast<int>(Parameters::structure);
 
-    // Sprawdzenie, czy użytkownik podał plik wynikowy.
     if (resultsFile.empty()) {
-        std::cout
-            << "Blad: nie podano pliku wynikowego --resultsFile.\n";
+        std::cout << "Blad: nie podano pliku wynikowego --resultsFile.\n";
         return;
     }
 
-    // Graf musi posiadać co najmniej dwa wierzchołki.
     if (vertices < 2) {
-        std::cout
-            << "Blad: liczba wierzcholkow musi byc co najmniej 2.\n";
+        std::cout << "Blad: liczba wierzcholkow musi byc co najmniej 2.\n";
         return;
     }
 
-    // W badaniach używane są gęstości, np. 25, 50, 75 i 99%.
     if (density < 1 || density > 99) {
-        std::cout
-            << "Blad: gestosc musi nalezec do zakresu 1-99.\n";
+        std::cout << "Blad: gestosc musi nalezec do zakresu 1-99.\n";
         return;
     }
 
-    // Każdy przypadek musi być wykonany co najmniej raz.
     if (iterations < 1) {
-        std::cout
-            << "Blad: liczba powtorzen musi byc dodatnia.\n";
+        std::cout << "Blad: liczba powtorzen musi byc dodatnia.\n";
         return;
     }
+
     if (problem < 0 || problem > 2) {
         std::cout
             << "Blad: niepoprawny problem. "
@@ -770,6 +923,12 @@ void runBenchmark() {
             << "0 = obie, 1 = macierz, 2 = lista.\n";
         return;
     }
+
+    if (algorithm != 0 && !isAlgorithmCompatible(problem, algorithm)) {
+        std::cout << "Blad: wybrany algorytm nie pasuje do problemu.\n";
+        return;
+    }
+
     bool writeHeader = true;
 
     {
@@ -808,15 +967,15 @@ void runBenchmark() {
         << "\n";
 
     runBenchmarkForGraph(
-    file,
-    "PARAM",
-    vertices,
-    density,
-    iterations,
-    problem,
-    algorithm,
-    structure
-);
+        file,
+        "PARAM",
+        vertices,
+        density,
+        iterations,
+        problem,
+        algorithm,
+        structure
+    );
 
     file.close();
 
@@ -826,112 +985,106 @@ void runBenchmark() {
         << "\n";
 }
 
-
 void runSnapComparison() {
-    const std::string filename = "datasets/CA-GrQc-converted.txt";
+    const std::string filename =
+        "datasets/CA-GrQc_connected_undirected_weighted.txt";
 
-    const int vertices = 5242;
-    const int edges = 28980;
+    const int vertices = 4158;
+    const int edges = 13422;
 
     ListGraph graph(vertices);
 
     FileLoader::loadListGraph(filename, graph);
 
     std::cout << "SNAP CA-GrQc comparison\n";
+    std::cout << "File: " << filename << "\n";
     std::cout << "Vertices: " << vertices << "\n";
     std::cout << "Edges: " << edges << "\n";
 
-    auto start = std::chrono::high_resolution_clock::now();
+    Timer timer;
 
-    int cppMstWeight = Kruskal::getMstWeightList(graph);
-
-    auto end = std::chrono::high_resolution_clock::now();
-
-    long long timeUs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    timer.start();
+    long long cppMstWeight = calculateKruskalMstWeight(graph);
+    long long timeUs = timer.stop();
 
     std::cout << "C++ Kruskal MST weight: " << cppMstWeight << "\n";
     std::cout << "C++ Kruskal time [us]: " << timeUs << "\n";
-    std::cout << "NetworkX MST weight: 151373 "
-          << "(wartosc uzyskana w skrypcie scripts/compare_networkx.py)\n";
-
-    if (cppMstWeight == 151373) {
-        std::cout << "Result: OK - wyniki sa zgodne\n";
-    } else {
-        std::cout << "Result: UWAGA - wyniki sa rozne\n";
-    }
+    std::cout
+        << "Wartosc porownaj z wynikiem skryptu "
+        << "scripts/compare_networkx.py dla tego samego pliku.\n";
 }
 
 void runSnapAlgorithmsBenchmark() {
-    const std::string filename = "datasets/CA-GrQc_connected_directed_weighted.txt";
+    const std::string mstFile =
+        "datasets/CA-GrQc_connected_undirected_weighted.txt";
+
+    const std::string directedFile =
+        "datasets/CA-GrQc_connected_directed_weighted.txt";
+
     const int vertices = 4158;
+    const int source = 0;
+    const int sink = vertices - 1;
 
-    ListGraph graph(vertices);
+    ListGraph mstGraph(vertices);
+    ListGraph directedGraph(vertices);
 
-    FileLoader::loadListGraph(filename, graph);
+    FileLoader::loadListGraph(mstFile, mstGraph);
+    FileLoader::loadListGraph(directedFile, directedGraph);
 
     std::ofstream file("results/snap_algorithms.csv");
 
-    file << "algorithm,time_us\n";
-    file.flush();
+    if (!file.is_open()) {
+        std::cout << "Blad: nie mozna otworzyc results/snap_algorithms.csv\n";
+        return;
+    }
 
-    Timer timer;
-    long long time;
+    file << "datetime,algorithm,structure,vertices,source,sink,time_us\n";
 
-    std::cout << "Start Prim...\n";
-    {
-        std::streambuf* originalBuffer = std::cout.rdbuf();
-        std::ostringstream hiddenOutput;
-        std::cout.rdbuf(hiddenOutput.rdbuf());
+    auto measureAndSave = [&](const std::string& algorithmName, auto algorithmCall) {
+        Timer timer;
 
         timer.start();
-        Prim::runList(graph);
-        time = timer.stop();
+        algorithmCall();
+        long long time = timer.stop();
 
-        std::cout.rdbuf(originalBuffer);
-    }
-    file << "Prim," << time << "\n";
-    file.flush();
-    std::cout << "Prim OK\n";
+        file << getCurrentDateTime() << ","
+             << algorithmName << ","
+             << "list,"
+             << vertices << ","
+             << source << ","
+             << sink << ","
+             << time
+             << "\n";
 
-    std::cout << "Start Kruskal...\n";
-    timer.start();
-    Kruskal::getMstWeightList(graph);
-    time = timer.stop();
-    file << "Kruskal," << time << "\n";
-    file.flush();
-    std::cout << "Kruskal OK\n";
+        file.flush();
 
-    std::cout << "Start Dijkstra...\n";
-    {
-        std::streambuf* originalBuffer = std::cout.rdbuf();
-        std::ostringstream hiddenOutput;
-        std::cout.rdbuf(hiddenOutput.rdbuf());
+        std::cout << algorithmName
+                  << " OK, time [us]: "
+                  << time
+                  << "\n";
+    };
 
-        timer.start();
-        Dijkstra::runList(graph, 0);
-        time = timer.stop();
+    std::cout << "SNAP algorithms benchmark\n";
 
-        std::cout.rdbuf(originalBuffer);
-    }
-    file << "Dijkstra," << time << "\n";
-    file.flush();
-    std::cout << "Dijkstra OK\n";
+    measureAndSave("Prim", [&]() {
+        Prim::runList(mstGraph, false);
+    });
 
-    std::cout << "Start Bellman-Ford...\n";
-    {
-        std::streambuf* originalBuffer = std::cout.rdbuf();
-        std::ostringstream hiddenOutput;
-        std::cout.rdbuf(hiddenOutput.rdbuf());
+    measureAndSave("Kruskal", [&]() {
+        Kruskal::runList(mstGraph, false);
+    });
 
-        timer.start();
-        BellmanFord::runList(graph, 0);
-        time = timer.stop();
+    measureAndSave("Dijkstra", [&]() {
+        Dijkstra::runList(directedGraph, source, sink, false);
+    });
 
-        std::cout.rdbuf(originalBuffer);
-    }
-    file << "Bellman-Ford," << time << "\n";
-    file.flush();
-    std::cout << "Bellman-Ford OK\n";
+    measureAndSave("Bellman-Ford", [&]() {
+        BellmanFord::runList(directedGraph, source, sink, false);
+    });
+
+    measureAndSave("Ford-Fulkerson", [&]() {
+        FordFulkerson::runList(directedGraph, source, sink, false);
+    });
 
     file.close();
 
@@ -946,7 +1099,6 @@ int main(int argc, char* argv[]) {
 
     std::string mode = argv[1];
 
-    // Dodatkowe tryby projektu, których nie ma w bibliotece parametrów
     if (mode == "snap" || mode == "--snap") {
         runSnapComparison();
         return 0;
@@ -957,7 +1109,6 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    // Obsługa standardowych parametrów przez bibliotekę prowadzącego
     int parametersResult = Parameters::readParameters(argc - 1, argv + 1);
 
     if (parametersResult != 0) {

@@ -21,6 +21,7 @@ public:
 
     void add(const T& value);
     T& get(int index);
+    const T& get(int index) const;
 
     int getSize() const;
     bool isEmpty() const;
@@ -59,6 +60,17 @@ void LinkedList<T>::add(const T& value) {
 template <typename T>
 T& LinkedList<T>::get(int index) {
     Node* current = head;
+
+    for (int i = 0; i < index; i++) {
+        current = current->next;
+    }
+
+    return current->data;
+}
+
+template <typename T>
+const T& LinkedList<T>::get(int index) const {
+    const Node* current = head;
 
     for (int i = 0; i < index; i++) {
         current = current->next;
