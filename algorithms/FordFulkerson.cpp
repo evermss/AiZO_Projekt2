@@ -33,7 +33,6 @@ void FordFulkerson::runMatrix(MatrixGraph& graph, int source, int sink) {
     int maxFlow = 0;
 
     while (true) {
-
         bool* visited = new bool[vertices];
         int* parent = new int[vertices];
 
@@ -50,11 +49,9 @@ void FordFulkerson::runMatrix(MatrixGraph& graph, int source, int sink) {
         visited[source] = true;
 
         while (front < back) {
-
             int u = queue[front++];
 
             for (int v = 0; v < vertices; v++) {
-
                 if (!visited[v] && residual[u][v] > 0) {
                     queue[back++] = v;
                     visited[v] = true;
@@ -64,13 +61,13 @@ void FordFulkerson::runMatrix(MatrixGraph& graph, int source, int sink) {
         }
 
         if (!visited[sink]) {
+            delete[] queue;
             delete[] visited;
             delete[] parent;
-            delete[] queue;
             break;
         }
 
-        int pathFlow = 999999;
+        int pathFlow = INT_MAX;
 
         for (int v = sink; v != source; v = parent[v]) {
             int u = parent[v];
@@ -136,7 +133,8 @@ void FordFulkerson::runList(ListGraph& graph, int source, int sink) {
 
         for (int j = 0; j < list.getSize(); j++) {
             Edge edge = list.get(j);
-            residual[edge.getStart()][edge.getEnd()] = edge.getWeight();
+
+            residual[edge.getStart()][edge.getEnd()] += edge.getWeight();
         }
     }
 
@@ -171,13 +169,13 @@ void FordFulkerson::runList(ListGraph& graph, int source, int sink) {
         }
 
         if (!visited[sink]) {
+            delete[] queue;
             delete[] visited;
             delete[] parent;
-            delete[] queue;
             break;
         }
 
-        int pathFlow = 999999;
+        int pathFlow = INT_MAX;
 
         for (int v = sink; v != source; v = parent[v]) {
             int u = parent[v];
