@@ -1,5 +1,16 @@
+build/
 cmake-build-debug/
 .idea/
+venv/
+__pycache__/
+
 *.o
 *.exe
-.DS_Storeresults/external_dataset_logs/
+.DS_Store
+
+results/test_*
+results/final_*
+results/output.txt
+results/output_sp.txt
+results/output_mf.txt
+results/external_dataset_logs/

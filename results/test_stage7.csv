@@ -1,2 +1,0 @@
-datetime,test,problem,algorithm,structure,vertices,edges,density,iterations,start_vertex,end_vertex,min_us,max_us,avg_us
-2026-06-25 17:50:30,PARAM,MST,Prim,matrix,20,95,50,2,-1,-1,15,20,17
