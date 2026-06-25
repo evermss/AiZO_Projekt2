@@ -1,9 +1,24 @@
 #include "FordFulkerson.h"
 #include <iostream>
+#include <climits>
 
 void FordFulkerson::runMatrix(MatrixGraph& graph, int source, int sink) {
-
     int vertices = graph.getVertices();
+
+    if (
+        source < 0 ||
+        source >= vertices ||
+        sink < 0 ||
+        sink >= vertices
+    ) {
+        std::cout << "Blad: niepoprawne zrodlo lub ujscie.\n";
+        return;
+    }
+
+    if (source == sink) {
+        std::cout << "Blad: zrodlo i ujscie musza byc rozne.\n";
+        return;
+    }
 
     int** residual = new int*[vertices];
 
@@ -30,6 +45,12 @@ void FordFulkerson::runMatrix(MatrixGraph& graph, int source, int sink) {
         int* queue = new int[vertices];
         int front = 0;
         int back = 0;
+        if (!visited[sink]) {
+            delete[] queue;
+            delete[] visited;
+            delete[] parent;
+            break;
+        }
 
         queue[back++] = source;
         visited[source] = true;
@@ -74,6 +95,7 @@ void FordFulkerson::runMatrix(MatrixGraph& graph, int source, int sink) {
 
         maxFlow += pathFlow;
 
+        delete[] queue;
         delete[] visited;
         delete[] parent;
     }
@@ -89,6 +111,21 @@ void FordFulkerson::runMatrix(MatrixGraph& graph, int source, int sink) {
 
 void FordFulkerson::runList(ListGraph& graph, int source, int sink) {
     int vertices = graph.getVertices();
+
+    if (
+        source < 0 ||
+        source >= vertices ||
+        sink < 0 ||
+        sink >= vertices
+    ) {
+        std::cout << "Blad: niepoprawne zrodlo lub ujscie.\n";
+        return;
+    }
+
+    if (source == sink) {
+        std::cout << "Blad: zrodlo i ujscie musza byc rozne.\n";
+        return;
+    }
 
     int** residual = new int*[vertices];
 
@@ -165,6 +202,7 @@ void FordFulkerson::runList(ListGraph& graph, int source, int sink) {
 
         maxFlow += pathFlow;
 
+        delete[] queue;
         delete[] visited;
         delete[] parent;
     }
