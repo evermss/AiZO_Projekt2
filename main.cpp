@@ -504,9 +504,6 @@ void runBenchmarkForGraph(
     MatrixGraph matrixGraph(vertices);
     ListGraph listGraph(vertices);
 
-    GraphGenerator::generateMatrixGraph(matrixGraph, vertices, density);
-    GraphGenerator::generateListGraph(listGraph, vertices, density);
-
     const int TESTS = iterations;
 
     auto shouldRunProblem = [problem](int expectedProblem) {

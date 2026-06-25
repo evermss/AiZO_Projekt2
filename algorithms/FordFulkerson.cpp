@@ -45,12 +45,6 @@ void FordFulkerson::runMatrix(MatrixGraph& graph, int source, int sink) {
         int* queue = new int[vertices];
         int front = 0;
         int back = 0;
-        if (!visited[sink]) {
-            delete[] queue;
-            delete[] visited;
-            delete[] parent;
-            break;
-        }
 
         queue[back++] = source;
         visited[source] = true;
